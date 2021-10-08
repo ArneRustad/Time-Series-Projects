@@ -2,6 +2,7 @@
 library(ggplot2)
 library(dplyr)
 library(tidyverse)
+
 # Fetch data
 data= read.csv("bitcoin_data.csv")
 colnames(data) = c("Date", "Price")
@@ -47,4 +48,22 @@ plot(diff(data$Price, lag = 1, differences = 3), type = "l")
 
 # Differencing the log transformed time series and plotting
 acf(diff(log(data$Price)), na.action = na.pass)
-plot(diff(log(data$Price), lag = 1, differences = 3), type = "l")
+plot(diff(log(data$Price), lag = 1, differences = 1), type = "l")
+
+par(mfrow=c(1,2))
+plot(arima.sim(list(order=c(0,0,1), ma=.9), n=100))
+
+?arima.sim
+
+
+mod.arma <- arima(ts(log(data$Price)), order=c(2,1,0), include.mean = TRUE)
+mean(diff(log(data$Price)), na.rm=TRUE)
+
+mod.arma.diff <- arima(ts(diff(log(data$Price))), order=c(2,0,0), include.mean = FALSE)
+
+predict(mod.arma, n.ahead = 10)
+predict(mod.arma.diff, n.ahead = 10)
+?predict.Arima
+"hei"
+
+      
