@@ -64,5 +64,6 @@ mod.arma.diff <- arima(ts(diff(log(data$Price))), order=c(2,0,0), include.mean =
 predict(mod.arma, n.ahead = 10)
 predict(mod.arma.diff, n.ahead = 10)
 ?predict.Arima
+"hei"
 
       
