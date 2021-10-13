@@ -23,83 +23,71 @@ scale_factors
 
 
 
-scaled_train <- data %>%
+scaled_price <- data %>%
   dplyr::select(Price) %>%
   dplyr::mutate(Price = (Price - scale_factors[1]) / scale_factors[2])
 
+scaled_train <- scaled_price[data$Date<as.Date("2018-01-01"),]
 
+scaled_test <- scaled_price[data$Date>=as.Date("2018-01-01"),]
 
 prediction <- 12
 lag <- 12
 
 
-scaled_train <- as.matrix(scaled_train)
-scaled_train
+
 
 # we lag the data 11 times and arrange that into columns
-x_train_data <- t(sapply(
-  1:(length(scaled_train) - lag - prediction + 1),
-  function(x) scaled_train[x:(x + lag - 1), 1]
-))
-x_train_data
-# now we transform it into 3D form
-x_train_arr <- array(
-  data = as.numeric(unlist(x_train_data)),
-  dim = c(
-    nrow(x_train_data),
-    lag,
-    1
+get_x_data <- function(scaled_data){
+  scaled_data <- as.matrix(scaled_data)
+  x_data <- t(sapply(
+    1:(length(scaled_data) - lag - prediction + 1),
+    function(x) scaled_data[x:(x + lag - 1), 1]
+  ))
+  # now we transform it into 3D form
+  x_arr <- array(
+    data = as.numeric(unlist(x_data)),
+    dim = c(
+      nrow(x_data),
+      lag,
+      1
+    )
   )
-)
-x_train_arr
+  
+  return(x_arr)
+} 
 
+get_y_data <- function(scaled_data){
+  scaled_data <- as.matrix(scaled_data)
 
-y_train_data <- t(sapply(
-  (1 + lag):(length(scaled_train) - prediction + 1),
-  function(x) scaled_train[x:(x + prediction - 1)]
-))
-
-y_train_arr <- array(
-  data = as.numeric(unlist(y_train_data)),
-  dim = c(
-    nrow(y_train_data),
-    prediction,
-    1
+  y_data <- t(sapply(
+    (1 + lag):(length(scaled_data) - prediction + 1),
+    function(x) scaled_data[x:(x + prediction - 1)]
+  ))
+  
+  y_arr <- array(
+    data = as.numeric(unlist(y_data)),
+    dim = c(
+      nrow(y_data),
+      prediction,
+      1
+    )
   )
-)
-y_train_data
+  return(y_arr)
+} 
 
-x_test <- data$Price[(nrow(scaled_train) - prediction + 1):nrow(scaled_train)]
-x_test
+x_train_arr = get_x_data(scaled_train)
+y_train_arr = get_y_data(scaled_train)
 
-# scale the data with same scaling factors as for training
-x_test_scaled <- (x_test - scale_factors[1]) / scale_factors[2]
-
-# this time our array just has one sample, as we intend to perform one 12-months prediction
-x_pred_arr <- array(
-  data = x_test_scaled,
-  dim = c(
-    1,
-    lag,
-    1
-  )
-)
-
-x_pred_arr2 <- array(
-  data = rep(x_test_scaled,each=601),
-  dim = c(
-    601,
-    lag,
-    1
-  )
-)
-
+class(scaled_test)
+class(scaled_train)
+x_pred_arr = get_x_data(scaled_test)
+y_pred_arr_truth = get_y_data(scaled_test)
 
 
 
 
 lstm_model <- keras_model_sequential()
-
 
 
 lstm_model %>%
@@ -161,7 +149,10 @@ lstm_forecast <- lstm_model_pred %>%
 lstm_forecast <- lstm_forecast * scale_factors[2] + scale_factors[1]
 lstm_forecast
  
-
+apply(abs(lstm_forecast-(y_pred_arr_truth[,,1]* scale_factors[2] + scale_factors[1])),2,mean)
+plot(lstm_forecast[,1], type="l")
+plot(y_pred_arr_truth[,1,1]* scale_factors[2] + scale_factors[1], type = "l")
+lines(lstm_forecast[,1])
 # lstm_forecast2 <- lstm_model %>%
 #   predict(x_pred_arr2, batch_size = 601) %>%
 #   .[, , 1]
