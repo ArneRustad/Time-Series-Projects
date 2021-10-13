@@ -121,7 +121,7 @@ sim.arima = function(data, start.date, end.date, ar = 0, ma = NULL, differencing
   }
 }
 
-sim.arima(data, "2018-01-01", "2019-01-01", ar = c(0.975), ma = 0.6, sd = 1)
+sim.arima(data, "2018-01-01", "2019-01-01", ar = c(0.975), ma = 0.2, sd = 1)
 ?arima.sim
 
 exp(predict(mod.arima.log.differenced.best, n.ahead = 10)$pred)
@@ -133,3 +133,6 @@ plot(df.log.detrended$Trend.poly1 + arima.sim(model = list(ar = mod.arima.log.de
 mod.arima.log.detrended.best$model
 
 ?filter
+
+
+filter(1)
