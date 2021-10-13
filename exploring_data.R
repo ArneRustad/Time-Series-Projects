@@ -65,5 +65,62 @@ predict(mod.arma, n.ahead = 10)
 predict(mod.arma.diff, n.ahead = 10)
 ?predict.Arima
 
+<<<<<<< HEAD
 
       
+=======
+df.aic.log.differenced = data.table(expand.grid(ar = 1:4, ma = 1:4, incl.mean = c(FALSE)), aic = NULL)
+for (i in 1:nrow(df.aic.log.differenced)) {
+  df.aic.log.differenced[i, "aic"] = arima(ts(log(data$Price)),
+                                         order=c(df.aic.log.differenced$ar[i], 1, df.aic.log.differenced$ma[i]))$aic
+}
+df.aic.log.differenced = df.aic.log.differenced[order(df.aic.log.differenced$aic, decreasing = TRUE),]
+df.aic.log.differenced
+
+mod.arima.log.differenced.best = arima(ts(log(data$Price)),
+                                     order=c(1, 1, 2))
+
+sim.arima = function(data, start.date, end.date, ar = 0, ma = NULL, differencing = 0, plot = TRUE, sd = 1) {
+  start.date = as.Date(start.date)
+  end.date = as.Date(end.date)
+  n = as.numeric(end.date - start.date) + 1
+  
+  order = c(length(ar), differencing, length(ma))
+  ar.order = order[1]
+  x.init = data$Price[data$Date < start.date]
+  x.init = c(rep(0, max(ar.order, order[3])), x.init)
+  innov = x.init
+  #innov[1:ar.order] = x.init[1:ar.order]
+  
+  for(i in (ar.order+1):length(innov)) {
+    ma.order = min(i-1, order[3])
+    if (ma.order) {
+      ma.term = sum(ma[1:ma.order] * innov[(i-ma.order):(i-1)])
+    } else {ma.term = 0}
+    print(paste(x.init[i], sum(ar * x.init[(i-ar.order):(i-1)]),  ma.term))
+    innov[i] = x.init[i] - sum(ar * x.init[(i-ar.order):(i-1)]) + ma.term
+  }
+  print(innov)
+  sim = arima.sim(model = list(order = order, ar = ar, ma = ma), n = n,
+                  n.start = length(innov)-2, start.innov = innov[-c(1:2)], sd = sd(innov))
+  df = data.table(Date = as.Date(min(data$Date):end.date, origin = "1970-01-01"),
+                  Price = c(data$Price[data$Date < start.date], sim))
+  df$Simulated = df$Date >= start.date
+  if (plot) {
+    ggplot(df, aes(x = Date, y = Price, col = Simulated)) + geom_line()
+  }
+}
+
+sim.arima(data, "2018-01-01", "2019-01-01", ar = c(0.975), ma = 0.2, sd = 1)
+?arima.sim
+
+exp(predict(mod.arima.log.differenced.best, n.ahead = 10)$pred)
+length(df.log.detrended$Trend.poly1)
+plot(df.log.detrended$Trend.poly1 + arima.sim(model = list(ar = mod.arima.log.detrended.best$model$phi, ma = mod.arima.log.detrended.best$model$theta),
+          n = 1827))
+?arima.sim
+
+mod.arima.log.detrended.best$model
+
+?filter
+
