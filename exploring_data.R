@@ -5,7 +5,7 @@ library(tidyverse)
 library(data.table)
 library(stringr)
 # Fetch data
-image.dir = "Project1/Images"
+image.dir = "Project1/Images/"
 width = 6
 height = 4
 
@@ -67,6 +67,10 @@ acf(df.log.trend$Price - df.log.trend$Trend.poly1, na.action = na.pass)
 pacf(df.log.trend$Price - df.log.trend$Trend.poly1, na.action = na.pass)
 plot(data$Date, df.log.trend$Price - df.log.trend$Trend.poly1, type = "l", main = "Log transformed then detrended")
 
+ggplot(df.log.trend, aes(x = Date, y = Price-Trend.poly1)) + geom_line() + ggtitle("Log transformed then detrended Bitcoin time series") + ylab("Detrend(log(Price))") + 
+  theme(plot.margin = unit(c(0.5,0.5,0,0), "cm"))
+ggsave("detrended-log-ts.jpg", path = image.dir, width = width, height = height)
+
 mod.ar.log.detrended = arima(ts(df.log.trend$Price - df.log.trend$Trend.poly1), order=c(2, 0, 0))
 
 df.aic.log.detrended = data.table(expand.grid(ar = 1:4, ma = 1:4), aic = NULL)
@@ -91,8 +95,16 @@ ggsave("plot_differenced_ts.jpg", path = image.dir, width = width, height = heig
 
 
 # Differencing the log transformed time series and plotting
-acf(diff(log(data$Price)), na.action = na.pass)
-pacf(diff(log(data$Price)), na.action = na.pass)
+#save plot
+jpeg(file=paste0(image.dir,"acf-diff-log.jpeg"))
+acf(diff(log(data$Price)), na.action = na.pass, main = "ACF for differenced log tranformed series")
+dev.off()
+
+
+jpeg(file=paste0(image.dir,"pacf-diff-log.jpeg"))
+pacf(diff(log(data$Price)), na.action = na.pass, main = "Partial ACF for differenced log tranformed series")
+dev.off()
+
 
 ggplot(data.frame(Date = data$Date[-1], Price = diff(log(data$Price))), aes(x = Date, y = Price)) +
   geom_line() + ggtitle("Differenced log transformed Bitcoin time series") + ylab("Diff(log(Price))") + 
@@ -131,7 +143,7 @@ start.date.test = "2019-01-01"
 transformation = log
 inv.transformation = exp
 n.pred.ahead = 5
-plot.pred = 1
+plot.pred = TRUE
 
 test.preds.arima = function(data, order, start.date.test, transformation = NULL, inv.transformation = NULL, n.pred.ahead = 1,
                             plot.pred = NA) {
@@ -164,8 +176,7 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
   }
   
   if(!is.na(plot.pred)) {
-    y.column = sym(paste0("Pred", plot.pred))
-    p = ggplot(data.test, aes(x = Date, y = !!y.column, col = "Pred")) + geom_line() +
+    p = ggplot(data.test, aes(x = Date, y = get(paste0()), col = "Pred")) + geom_line() +
       guides(col = guide_legend(title = "Line")) + ylab(paste0("Pred", plot.pred)) +
       ggtitle(sprintf("Prediction %d days ahead for ARMA model plotted against true Bitcoin price", plot.pred))
     p = p + geom_line(data = data, aes(x = Date, y = Price, col = "Truth"))
@@ -207,7 +218,7 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
 
 test.preds.arima(data, order = c(2,1,3), start.date.test = "2019-01-01",
                  transformation = log, inv.transformation = exp,
-                 n.pred.ahead = 2, plot.pred = 1)
+                 n.pred.ahead = 2, plot.pred = TRUE)
 is.null(exp)
 sum(is.na(c(log, exp)))
 
