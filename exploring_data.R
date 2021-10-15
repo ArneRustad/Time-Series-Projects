@@ -5,6 +5,10 @@ library(tidyverse)
 library(data.table)
 library(stringr)
 # Fetch data
+image.dir = "Project1/Images"
+width = 6
+height = 4
+
 data= read.csv("bitcoin_data.csv")
 
 # Change column type and format of missing values from . to NA
@@ -20,7 +24,8 @@ lapply(data,class)
 # Plot data
 par(mfrow = c(1,1))
 ggplot(data, aes(x = Date, y = Price)) + geom_line() + ggtitle("Bitcoin time series")
-## ggsave
+ggsave("plot_ts_bitcoin.jpg", path = image.dir, width = width, height = height)
+
 acf(data$Price, na.action = na.pass)
 pacf(data$Price, na.action = na.pass)
 
@@ -153,7 +158,7 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
   }
   
   if(!is.na(plot.pred)) {
-    p = ggplot(data.test, aes(x = Date, y = Pred1, col = "Pred")) + geom_line() +
+    p = ggplot(data.test, aes(x = Date, y = get(paste0()), col = "Pred")) + geom_line() +
       guides(col = guide_legend(title = "Line")) + ylab(paste0("Pred", plot.pred)) +
       ggtitle(sprintf("Prediction %d days ahead for ARMA model plotted against true Bitcoin price", plot.pred))
     p = p + geom_line(data = data, aes(x = Date, y = Price, col = "Truth"))
