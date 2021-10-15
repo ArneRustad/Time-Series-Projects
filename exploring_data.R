@@ -131,7 +131,7 @@ start.date.test = "2019-01-01"
 transformation = log
 inv.transformation = exp
 n.pred.ahead = 5
-plot.pred = TRUE
+plot.pred = 1
 
 test.preds.arima = function(data, order, start.date.test, transformation = NULL, inv.transformation = NULL, n.pred.ahead = 1,
                             plot.pred = NA) {
@@ -164,7 +164,8 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
   }
   
   if(!is.na(plot.pred)) {
-    p = ggplot(data.test, aes(x = Date, y = get(paste0()), col = "Pred")) + geom_line() +
+    y.column = sym(paste0("Pred", plot.pred))
+    p = ggplot(data.test, aes(x = Date, y = !!y.column, col = "Pred")) + geom_line() +
       guides(col = guide_legend(title = "Line")) + ylab(paste0("Pred", plot.pred)) +
       ggtitle(sprintf("Prediction %d days ahead for ARMA model plotted against true Bitcoin price", plot.pred))
     p = p + geom_line(data = data, aes(x = Date, y = Price, col = "Truth"))
@@ -206,7 +207,7 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
 
 test.preds.arima(data, order = c(2,1,3), start.date.test = "2019-01-01",
                  transformation = log, inv.transformation = exp,
-                 n.pred.ahead = 2, plot.pred = TRUE)
+                 n.pred.ahead = 2, plot.pred = 1)
 is.null(exp)
 sum(is.na(c(log, exp)))
 
