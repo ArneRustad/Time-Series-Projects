@@ -23,15 +23,18 @@ lapply(data,class)
 
 # Plot data
 par(mfrow = c(1,1))
-ggplot(data, aes(x = Date, y = Price)) + geom_line() + ggtitle("Bitcoin time series")
+ggplot(data, aes(x = Date, y = Price)) + geom_line() + ggtitle("Bitcoin time series") + theme(plot.margin = unit(c(0.5,0.5,0,0), "cm")) + 
+  ylab("Price (USD)")
 ggsave("plot_ts_bitcoin.jpg", path = image.dir, width = width, height = height)
 
 acf(data$Price, na.action = na.pass)
 pacf(data$Price, na.action = na.pass)
 
 # Plot data with log transformation
-ggplot(data, aes(x = Date, y = log(Price))) + geom_line() + ggtitle("Bitcoin time series with log transformation")
-## ggsave
+ggplot(data, aes(x = Date, y = log(Price))) + geom_line() + ggtitle("Bitcoin time series with log transformation") + theme(plot.margin = unit(c(0.5,0.5,0,0), "cm")) + 
+  ylab("log(Price) (USD)")
+ggsave("plot_ts_bitcoin_logscale.jpg", path = image.dir, width = width, height = height)
+
 
 acf(log(data$Price), na.action = na.pass)
 pacf(log(data$Price), na.action = na.pass)
@@ -83,16 +86,18 @@ acf(diff(data$Price), na.action = na.pass)
 plot(diff(data$Price, lag = 1, differences = 3), type = "l")
 
 ggplot(data.frame(Date = data$Date[-1], Price = diff(data$Price)), aes(x = Date, y = Price)) +
-  geom_line() + ggtitle("Differenced Bitcoin time series") + ylab("Diff(Price)")
-## ggsave
+  geom_line() + ggtitle("Differenced Bitcoin time series") + ylab("Diff(Price)") + theme(plot.margin = unit(c(0.5,0.5,0,0), "cm"))
+ggsave("plot_differenced_ts.jpg", path = image.dir, width = width, height = height)
+
 
 # Differencing the log transformed time series and plotting
 acf(diff(log(data$Price)), na.action = na.pass)
 pacf(diff(log(data$Price)), na.action = na.pass)
 
 ggplot(data.frame(Date = data$Date[-1], Price = diff(log(data$Price))), aes(x = Date, y = Price)) +
-  geom_line() + ggtitle("Differencing log transformed Bitcoin time series") + ylab("Diff(log(Price))")
-## ggsave
+  geom_line() + ggtitle("Differenced log transformed Bitcoin time series") + ylab("Diff(log(Price))") + 
+  theme(plot.margin = unit(c(0.5,0.5,0,0), "cm"))
+ggsave("plot_differenced_log_ts.jpg", path = image.dir, width = width, height = height)
 
 # Choosing ARMA model for differenced log transformed time series
 df.aic.log.differenced = data.table(expand.grid(ar = 1:4, ma = 1:4, incl.mean = c(FALSE)), aic = NULL, bic = NULL)
@@ -110,15 +115,16 @@ mod.arima.log.differenced.best
 
 # Diagnosting if residuals for ARMA model for differenced log transformed time series appear as white noise
 mean(mod.arima.log.differenced.best$residuals, na.rm = TRUE)
-acf(mod.arima.log.differenced.best$residuals, na.action = na.pass)
-## ggsave
+acf(mod.arima.log.differenced.best$residuals, na.action = na.pass, main = "Autocorrelation of residuals from ARMA model")
+
+ggsave("plot_acf_residuals_differenced_log_ts.jpg", path = image.dir, width = width, height = height)
 
 Box.test(mod.arima.log.differenced.best$residuals)
 ggplot(data.frame(Residual = mod.arima.log.differenced.best$residuals),
        aes( x= seq_along(Residual), y = Residual)) +
-  geom_line() + ggtitle("Residuals for ARMA(1,2) model on differenced log transformed Bitcoin time series") +
+  geom_line() + ggtitle("Residuals from model on differenced log transformed time series") +
   xlab("Residual no.") + ylab("Value")
-## ggsave
+ggsave("plot_residuals_differenced_log_ts.jpg", path = image.dir, width = width, height = height)
 
 order = c(1,1,2)
 start.date.test = "2019-01-01"
@@ -203,3 +209,4 @@ test.preds.arima(data, order = c(2,1,3), start.date.test = "2019-01-01",
                  n.pred.ahead = 2, plot.pred = TRUE)
 is.null(exp)
 sum(is.na(c(log, exp)))
+
