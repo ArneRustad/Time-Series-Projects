@@ -1,39 +1,26 @@
-library(keras)
-library(tensorflow)
-#install.packages('Rcpp')
-library(Rcpp)
-#install_keras()
-#install_tensorflow(version = "nightly")
+source("Project1/libraries_dirs_and_functions.R")
+data=data[-which(is.na(data$Price)),]
 
 
-# Fetch data
-data= read.csv("bitcoin_data.csv")
-colnames(data) = c("Date", "Price")
-
-# Change column type and format of missing values from . to NA
-data$Date = as.Date(data$Date)
-data$Price[which(data$Price == ".")] 
-data=data[-which(data$Price == "."),]
-data$Price = as.numeric(as.character(data$Price))
+data.log.diff = data.frame(Date = data$Date[-1], Price = diff(log(data$Price)))
 
 
-
-scale_factors <- c(mean(data$Price, na.rm=TRUE), sd(data$Price, na.rm=TRUE))
+scale_factors <- c(mean(data.log.diff$Price, na.rm=TRUE), sd(data.log.diff$Price, na.rm=TRUE))
 scale_factors
 
-scaled_price <- data %>%
+scaled_price <- data.log.diff %>%
   dplyr::select(Price) %>%
   dplyr::mutate(Price = (Price - scale_factors[1]) / scale_factors[2])
 
-start.date.test = as.Date("2020-01-01")
-scaled_train <- scaled_price[data$Date < start.date.test,]
-scaled_test <- scaled_price[data$Date >= start.date.test,]
+start.date.test = as.Date("2019-01-01")
+scaled_train <- scaled_price[data.log.diff$Date < start.date.test,]
+scaled_test <- scaled_price[data.log.diff$Date >= start.date.test,]
 
 length(scaled_train)
 length(scaled_test)
 
-prediction <- 5
-lag <- 1
+prediction <- 10
+lag <- 10
 batch_size = 50
 
 # we lag the data 11 times and arrange that into columns
@@ -137,18 +124,20 @@ lstm_forecast
 apply(abs(lstm_forecast-(y_pred_arr_truth[,,1]* scale_factors[2] + scale_factors[1])),2,mean)
 
 plot(y_pred_arr_truth[,1,1]* scale_factors[2] + scale_factors[1], type = "l")
-lines(lstm_forecast[,1])
+lines(lstm_forecast[,1], col = "red")
+
+lstm_forecast[,1]
+# lstm_forecast <- lstm_model_pred %>%
+#   predict(x_train_arr, batch_size = 1) %>%
+#   .[, , 1]
+# # we need to rescale the data to restore the original values
+# lstm_forecast <- lstm_forecast * scale_factors[2] + scale_factors[1]
+# lstm_forecast
+# 
+# apply(abs(lstm_forecast-(y_train_arr[,,1]* scale_factors[2] + scale_factors[1])),2,mean)
+# plot(lstm_forecast[,1], type="l")
+# plot(y_train_arr[,1,1]* scale_factors[2] + scale_factors[1], type = "l")
+# lines(lstm_forecast[,1])
 
 
-lstm_forecast <- lstm_model_pred %>%
-  predict(x_train_arr, batch_size = 1) %>%
-  .[, , 1]
-# we need to rescale the data to restore the original values
-lstm_forecast <- lstm_forecast * scale_factors[2] + scale_factors[1]
-lstm_forecast
-
-apply(abs(lstm_forecast-(y_train_arr[,,1]* scale_factors[2] + scale_factors[1])),2,mean)
-plot(lstm_forecast[,1], type="l")
-plot(y_train_arr[,1,1]* scale_factors[2] + scale_factors[1], type = "l")
-lines(lstm_forecast[,1])
 
