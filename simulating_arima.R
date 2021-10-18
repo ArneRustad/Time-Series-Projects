@@ -1,10 +1,13 @@
+source("Project1/libraries_dirs_and_functions.R")
 
 sim.arima = function(data, start.date, end.date, n.sim = 1, ar = 0, ma = NULL, differencing = 0, plot = TRUE, sd.innov = "estimate",
                      plot.truth.against.sim = FALSE,
                      transformation = function(x) return(x),
                      plot.transformed = FALSE,
-                     inv.transformation = function(x) return(x)) {
-  
+                     inv.transformation = function(x) return(x), 
+                     y.lab="Price (USD)",
+                     seed=NULL) {
+  if(!is.null(seed)){set.seed(seed)}
   if (differencing >= 2) stop("Differencing >= 2 not yet implemented")
   
   start.date = as.Date(start.date)
@@ -32,7 +35,7 @@ sim.arima = function(data, start.date, end.date, n.sim = 1, ar = 0, ma = NULL, d
   if (as.character(sd.innov) == "estimate") sd.innov = sd(innov)
   
   df.sim = data.table(Date = rep(dates.to.sim, times = n.sim), n.sim = rep(1:n.sim, each = n), Price = as.numeric(NA),
-                      Simulated = TRUE)
+                      Simulated = "Simulated ts")
   curr.rows = 1:n
   for (i in seq_len(n.sim)) {
     sim = arima.sim(model = list(order = order, ar = ar, ma = ma), n = (n-differencing),
@@ -46,10 +49,11 @@ sim.arima = function(data, start.date, end.date, n.sim = 1, ar = 0, ma = NULL, d
   
   if (plot) {
     p = ggplot(df.sim, aes(x = Date, y = Price, col = as.factor(n.sim), linetype = Simulated)) + geom_line() +
-      guides(col = guide_legend(title = "Sim no."))
+      guides(col = guide_legend(title = "Sim no."), linetype= guide_legend(title=NULL))+
+      scale_linetype_manual(values=c("dotted","solid")) + ggtitle("Bitcoin time series and simualtions")+ylab(y.lab)
     if (plot.truth.against.sim) {
       dt.truth = as.data.table(data[data$Date <= end.date,])
-      dt.truth$Simulated = FALSE
+      dt.truth$Simulated = "True ts"
       if (plot.transformed) dt.truth$Price = transformation(dt.truth$Price)
       p = p + geom_line(aes(x = Date, y = Price, linetype = Simulated), col = "black", data = dt.truth)
     }
@@ -57,23 +61,44 @@ sim.arima = function(data, start.date, end.date, n.sim = 1, ar = 0, ma = NULL, d
   print(p)
 }
 
-sim.arima(data, "2019-10-01", "2021-01-01", n.sim = 1, ar = c(0.99), ma = c(0.8), differencing = 0,
-          sd.innov = "estimate",
-          plot.truth.against.sim = TRUE)
+#sim.arima(data, "2019-10-01", "2021-01-01", n.sim = 1, ar = c(0.99), ma = c(0.8), differencing = 0,
+#         sd.innov = "estimate",
+#          plot.truth.against.sim = TRUE)
 
-mod.arima.log.differenced.best
-sim.arima(data, "2020-01-01", "2021-01-01", n.sim = 5, ar = c(0.0399), ma = c(-0.0870, 0.471), differencing = 1,
+#mod.arima.log.differenced.best
+fit=arima(log(data$Price), order=c(6,1,10))
+ar.coef=fit$coef[grep("^ar",names(fit$coef))]
+ma.coef=fit$coef[grep("^ma",names(fit$coef))]
+sigma=sqrt(fit$sigma2)
+
+xtable(t(data.frame(fit$coef,sqrt(diag(fit$var.coef)))))
+data.frame(fit$coef,sqrt(diag(fit$var.coef)))
+
+sim.arima.log.plot <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 5, ar = ar.coef, ma = ma.coef, differencing = 1,
+          sd.innov = sigma,
+          plot.truth.against.sim = TRUE,
+          transformation = log,
+          inv.transformation = exp,
+          plot.transformed = TRUE, 
+          y.lab="log(Price) (USD)",
+          seed=10)
+
+ggsave("sim.arima.log.plot.jpg", path = image.dir, width = width, height = height)
+
+
+sim.arima.plot <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 5, ar = c(0.0399), ma = c(-0.0870, 0.471), differencing = 1,
           sd.innov = sqrt(0.001805),
           plot.truth.against.sim = TRUE,
           transformation = log,
           inv.transformation = exp,
-          plot.transformed = TRUE)
+          plot.transformed = FALSE, seed=7)
+ggsave("sim.arima.plot.jpg", path = image.dir, width = width, height = height)
 
-plot(arima.sim(list(order = c(1,1,2), ar = c(0.0399), ma = c(-0.0870, 0.471)), n = 100, sd = sqrt(0.001805)))
+#plot(arima.sim(list(order = c(1,1,2), ar = c(0.0399), ma = c(-0.0870, 0.471)), n = 100, sd = sqrt(0.001805)))
 
-sim.arima(data, "2020-01-01", "2021-01-01", n.sim = 1, ar = c(0.0399), ma = c(-0.0870, 0.0471), differencing = 0,
-          sd.innov = sqrt(0.001805),
-          plot.truth.against.sim = TRUE,
-          transformation = log,
-          inv.transformation = exp,
-          plot.transformed = TRUE)
+# sim.arima(data, "2020-01-01", "2021-01-01", n.sim = 1, ar = c(0.0399), ma = c(-0.0870, 0.0471), differencing = 0,
+#           sd.innov = sqrt(0.001805),
+#           plot.truth.against.sim = TRUE,
+#           transformation = log,
+#           inv.transformation = exp,
+#           plot.transformed = TRUE)
