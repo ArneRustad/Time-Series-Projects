@@ -9,8 +9,8 @@ library(xtable)
 
 aicc = function(model){
   n = model$nobs
-  p = length(model$coef)
-  aicc = model$aic + 2*p*n / (n-p-1) - 2 * p
+  p.and.q = length(model$coef)
+  aicc = -2 * model$loglik + 2*(p.and.q + 1)*n / (n - p.and.q - 2)
   return(aicc)
 }
 
