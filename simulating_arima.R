@@ -57,8 +57,10 @@ sim.arima = function(data, start.date, end.date, n.sim = 1, ar = 0, ma = NULL, d
       if (plot.transformed) dt.truth$Price = transformation(dt.truth$Price)
       p = p + geom_line(aes(x = Date, y = Price, linetype = Simulated), col = "black", data = dt.truth)
     }
+    print(p)
   }
-  print(p)
+  
+ return(df.sim)
 }
 
 #sim.arima(data, "2019-10-01", "2021-01-01", n.sim = 1, ar = c(0.99), ma = c(0.8), differencing = 0,
@@ -86,19 +88,23 @@ sim.arima.log.plot <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 5, ar 
 ggsave("sim.arima.log.plot.jpg", path = image.dir, width = width, height = height)
 
 
-sim.arima.plot <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 5, ar = c(0.0399), ma = c(-0.0870, 0.471), differencing = 1,
-          sd.innov = sqrt(0.001805),
-          plot.truth.against.sim = TRUE,
-          transformation = log,
-          inv.transformation = exp,
-          plot.transformed = FALSE, seed=7)
+sim.arima.log.plot <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 5, ar = ar.coef, ma = ma.coef, differencing = 1,
+                                sd.innov = sigma,
+                                plot.truth.against.sim = FALSE,
+                                transformation = log,
+                                inv.transformation = exp,
+                                plot.transformed = FALSE, 
+                                y.lab="log(Price) (USD)",
+                                seed=10)
 ggsave("sim.arima.plot.jpg", path = image.dir, width = width, height = height)
 
-#plot(arima.sim(list(order = c(1,1,2), ar = c(0.0399), ma = c(-0.0870, 0.471)), n = 100, sd = sqrt(0.001805)))
 
-# sim.arima(data, "2020-01-01", "2021-01-01", n.sim = 1, ar = c(0.0399), ma = c(-0.0870, 0.0471), differencing = 0,
-#           sd.innov = sqrt(0.001805),
-#           plot.truth.against.sim = TRUE,
-#           transformation = log,
-#           inv.transformation = exp,
-#           plot.transformed = TRUE)
+df.sim.arima.log <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 10000, ar = ar.coef, ma = ma.coef, differencing = 1,
+                                sd.innov = sigma,
+                                plot=FALSE,
+                                transformation = log,
+                                inv.transformation = exp,
+                                seed=10)
+
+dt.sim.arima.log=as.data.table(df.sim.arima.log%>%mutate(lower.than.start = (Price<Price[1])))
+sum(dt.sim.arima.log[,sum(lower.than.start),by=n.sim]$V1 == 0)
