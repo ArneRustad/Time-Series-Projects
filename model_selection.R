@@ -29,13 +29,25 @@ xtable(df.aic.log.differenced %>% select(ar, ma, AICc) %>% slice_head(n = 10))
 df.aic.log.differenced[order(df.aic.log.differenced$bic, decreasing = TRUE),]
 
 mod.arima.log.differenced.best = arima(ts(log(data$Price)),
-                                       order=c(4, 1, 12))
+                                       order=c(6, 1, 10))
 
-mod.arima.log.differenced.best$coef
 
-diag(mod.arima.log.differenced.best$var.coef)
-mod.arima.log.differenced.best
-aicc(mod.arima.log.differenced.best)
 
-arima(ts(log(data$Price)),
-      order=c(1, 1, 12))
+# Diagnosting if residuals for ARMA model for differenced log transformed time series appear as white noise
+mean(mod.arima.log.differenced.best$residuals, na.rm = TRUE)
+
+jpeg(file=paste0(image.dir,"plot_acf_residuals_differenced_log_ts.jpg"))
+acf(mod.arima.log.differenced.best$residuals, na.action = na.pass, main = "Autocorrelation of residuals from ARMA(6,10) model")
+dev.off()
+
+
+Box.test(mod.arima.log.differenced.best$residuals)
+ggplot(data.frame(Residual = mod.arima.log.differenced.best$residuals),
+       aes( x= seq_along(Residual), y = Residual)) +
+  geom_line() + ggtitle("Residuals from model on differenced log transformed time series") +
+  xlab("Residual no.") + ylab("Value")
+ggsave("plot_residuals_differenced_log_ts.jpg", path = image.dir, width = width, height = height)
+
+
+
+
