@@ -98,9 +98,11 @@ ggsave("plot_differenced_log_ts.jpg", path = image.dir, width = width, height = 
 
 # Diagnosting if residuals for ARMA model for differenced log transformed time series appear as white noise
 mean(mod.arima.log.differenced.best$residuals, na.rm = TRUE)
-acf(mod.arima.log.differenced.best$residuals, na.action = na.pass, main = "Autocorrelation of residuals from ARMA model")
 
-ggsave("plot_acf_residuals_differenced_log_ts.jpg", path = image.dir, width = width, height = height)
+jpeg(file=paste0(image.dir,"plot_acf_residuals_differenced_log_ts.jpg"))
+acf(mod.arima.log.differenced.best$residuals, na.action = na.pass, main = "Autocorrelation of residuals from ARMA model")
+dev.off()
+
 
 Box.test(mod.arima.log.differenced.best$residuals)
 ggplot(data.frame(Residual = mod.arima.log.differenced.best$residuals),
