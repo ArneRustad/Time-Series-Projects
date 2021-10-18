@@ -34,7 +34,19 @@ mod.arima.log.differenced.best = arima(ts(log(data$Price)),
 
 
 # Diagnosting if residuals for ARMA model for differenced log transformed time series appear as white noise
-mean(mod.arima.log.differenced.best$residuals, na.rm = TRUE)
+mean.residuals = mean(mod.arima.log.differenced.best$residuals, na.rm = TRUE)
+se.residuals = sd(mod.arima.log.differenced.best$residuals, na.rm = TRUE)
+df.residuals = data.frame(residuals = mod.arima.log.differenced.best$residuals)
+
+# Checking for normality in the residuals
+hist(mod.arima.log.differenced.best$residuals)
+ggplot(data = df.residuals) + geom_histogram(mapping = aes(x = residuals, y = ..density..)) + 
+  stat_function(fun = dnorm,  args = list(mean = mean.residuals, sd = se.residuals),  color="red", lwd=1)
+
+qqnorm(mod.arima.log.differenced.best$residuals, pch = 1, frame = FALSE)
+qqline(mod.arima.log.differenced.best$residuals, lwd = 2)
+
+
 
 jpeg(file=paste0(image.dir,"plot_acf_residuals_differenced_log_ts.jpg"))
 acf(mod.arima.log.differenced.best$residuals, na.action = na.pass, main = "Autocorrelation of residuals from ARMA(6,10) model")
