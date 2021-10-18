@@ -9,7 +9,7 @@ library(progress)
 aicc = function(model){
   n = model$nobs
   p = length(model$coef)
-  aicc = model$aic + 2*p*(p+1)/(n-p-1)
+  aicc = model$aic + 2*(p+q+1)*n / (n-p-1)
   return(aicc)
 }
 
