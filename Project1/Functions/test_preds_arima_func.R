@@ -1,10 +1,17 @@
+source("Project1/libraries_dirs_and_functions.R")
 
-order = c(0,1,9)
+order = c(6,1,10)
 start.date.test = "2019-01-01"
 transformation = log
 inv.transformation = exp
 n.pred.ahead = 5
 plot.pred = 1
+
+library(tictoc)
+tic()
+arima(data$Price[data$Date < curr.date.test], order = order)
+toc()
+
 
 test.preds.arima = function(data, order, start.date.test, transformation = NULL, inv.transformation = NULL, n.pred.ahead = 1,
                             plot.pred = NA) {
@@ -81,3 +88,7 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
   df.direction
   return(list(df.error = df.error, df.direction = df.direction, df.investment))
 }
+
+test.preds.arima(data, order = c(0,1,1), start.date.test = "2019-01-01",
+                 transformation = log, inv.transformation = exp,
+                 n.pred.ahead = 2, plot.pred = 1)
