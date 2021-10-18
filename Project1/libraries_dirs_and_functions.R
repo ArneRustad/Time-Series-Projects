@@ -5,6 +5,7 @@ library(tidyverse)
 library(data.table)
 library(stringr)
 library(progress)
+library(xtable)
 
 aicc = function(model){
   n = model$nobs
