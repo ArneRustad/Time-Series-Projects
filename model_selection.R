@@ -8,6 +8,8 @@ df.aic.log.differenced = data.table(expand.grid(ar = 0:max.p, ma = 0:max.q, incl
                                     nan.in.se = NULL)
 pb = progress_bar$new(format = "(:spin) [:bar] :percent [Elapsed time: :elapsedfull || Estimated time remaining: :eta]",
                       total = (max.p+1)*(max.q+1), complete = "=", incomplete = "-", current = ">", clear = FALSE)
+
+#Finding AIC, BIC and AICc for different values of p, q in the ARMA model
 for (i in 1:nrow(df.aic.log.differenced)) {
   fit = arima(ts(log(data$Price)), order=c(df.aic.log.differenced$ar[i], 1, df.aic.log.differenced$ma[i]))
   df.aic.log.differenced[i, "aic"] = fit$aic
@@ -28,6 +30,7 @@ xtable(df.aic.log.differenced %>% select(ar, ma, AICc) %>% slice_head(n = 10))
 
 df.aic.log.differenced[order(df.aic.log.differenced$bic, decreasing = TRUE),]
 
+#Saving the ARMA model with best p and q
 mod.arima.log.differenced.best = arima(ts(log(data$Price)),
                                        order=c(6, 1, 10))
 
@@ -52,7 +55,7 @@ jpeg(file=paste0(image.dir,"plot_acf_residuals_differenced_log_ts.jpg"))
 acf(mod.arima.log.differenced.best$residuals, na.action = na.pass, main = "Autocorrelation of residuals from ARMA(6,10) model")
 dev.off()
 
-
+#Performing Box test for the residuals
 Box.test(mod.arima.log.differenced.best$residuals)
 ggplot(data.frame(Residual = mod.arima.log.differenced.best$residuals),
        aes( x= seq_along(Residual), y = Residual)) +

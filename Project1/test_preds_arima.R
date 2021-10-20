@@ -7,15 +7,12 @@ inv.transformation = exp
 n.pred.ahead = 5
 plot.pred = 1
 
+#Specifying dimensions of plots
 width = 6
 height = 4
 
-library(tictoc)
-tic()
-arima(data$Price[data$Date < curr.date.test], order = order)
-toc()
 
-
+#Function that predicts one day ahead using the ARMA model
 test.preds.arima = function(data, order, start.date.test, transformation = NULL, inv.transformation = NULL, n.pred.ahead = 1,
                             plot.pred = NA) {
   start.date.test = as.Date(start.date.test)
@@ -92,6 +89,7 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
   return(list(df.error = df.error, df.direction = df.direction, df.investment))
 }
 
+#Running the prediction for our choice of ARMA model
 test.preds.arima(data, order = c(6,1,10), start.date.test = "2019-10-06",
                  transformation = log, inv.transformation = exp,
                  n.pred.ahead = 2, plot.pred = 1)
