@@ -1,6 +1,6 @@
 source("Project1/libraries_dirs_and_functions.R")
 
-order = c(6,1,10)
+order = c(1,1,1)
 start.date.test = "2019-01-01"
 transformation = log
 inv.transformation = exp
