@@ -4,7 +4,7 @@ data=data[-which(is.na(data$Price)),]
 
 data.log.diff = data.frame(Date = data$Date[-1], Price = diff(log(data$Price)))
 
-prediction <- 10
+prediction <- 5
 lag <- prediction
 batch_size = 50
 
@@ -16,13 +16,17 @@ scaled_price <- data.log.diff %>%
   dplyr::select(Price) %>%
   dplyr::mutate(Price = (Price - scale_factors[1]) / scale_factors[2])
 
-start.date.test = as.Date("2019-01-01")
+start.date.test = as.Date("2019-10-06")
 end.date.test = max(data$Date)
-scaled_train <- scaled_price[data.log.diff$Date < start.date.test - lag,]
+start.date.validation = as.Date("2019-10-06")
+end.date.validation = start.date.test
+scaled_train <- scaled_price[data.log.diff$Date < start.date.validation - lag,]
+scaled_validation <- scaled_price[data.log.diff$Date < start.date.test & data.log.diff$Date >=start.date.validation,]
 scaled_test <- scaled_price[data.log.diff$Date >= start.date.test - lag,]
 
 length(scaled_train)
 length(scaled_test)
+length(scaled_validation)
 
 # we lag the data 11 times and arrange that into columns
 get_x_data <- function(scaled_data, lag, prediction){
@@ -73,6 +77,9 @@ get_y_data <- function(scaled_data, lag, prediction){
 x_train_arr = get_x_data(scaled_train, lag = lag, prediction = prediction)
 y_train_arr = get_y_data(scaled_train, lag = lag, prediction = prediction)
 
+x_validation_arr = get_x_data(scaled_validation, lag = lag, prediction = prediction)
+y_validation_arr = get_y_data(scaled_validation, lag = lag, prediction = prediction)
+
 x_pred_arr = get_x_data(scaled_test, lag = lag, prediction = 1)
 y_pred_arr_truth = get_y_data(scaled_test, lag = lag, prediction = 1)
 y_pred_one_ahead_truth = data$Price[data$Date >= start.date.test & data$Date <= end.date.test]
@@ -102,7 +109,9 @@ create_lstm_model = function(batch_size) {
 
 lstm_model = create_lstm_model(batch_size)
 
-train.indices.to.use = 1:(batch_size * floor(dim(x_train_arr)[[1]] / batch_size))
+train.indices.to.use = (dim(x_train_arr)[[1]]-batch_size * floor(dim(x_train_arr)[[1]] / batch_size)+1):(dim(x_train_arr)[[1]])
+validation.indices.to.use = (dim(x_validation_arr)[[1]]-batch_size * floor(dim(x_validation_arr)[[1]] / batch_size)+1):(dim(x_validation_arr)[[1]])
+length(validation.indices.to.use)
 
 lstm_model %>% fit(
   x = array(x_train_arr[train.indices.to.use,,], dim = c(length(train.indices.to.use),lag,1)),
@@ -110,8 +119,14 @@ lstm_model %>% fit(
   batch_size = batch_size,
   epochs = 20,
   verbose = 1,
-  shuffle = FALSE
+  shuffle = FALSE,
+  #validation_data=list(array(x_validation_arr[validation.indices.to.use,,],dim=c(length(validation.indices.to.use),lag,1)),
+                      3 array(y_validation_arr[validation.indices.to.use,,],dim=c(length(validation.indices.to.use),lag,1)))
 )
+
+# -------------------------------------------------------------------------
+
+
 
 #lstm_model$save("Project1/Models/model")
 
