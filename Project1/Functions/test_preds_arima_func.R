@@ -7,6 +7,9 @@ inv.transformation = exp
 n.pred.ahead = 5
 plot.pred = 1
 
+width = 6
+height = 4
+
 library(tictoc)
 tic()
 arima(data$Price[data$Date < curr.date.test], order = order)
@@ -89,6 +92,11 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
   return(list(df.error = df.error, df.direction = df.direction, df.investment))
 }
 
-test.preds.arima(data, order = c(0,1,1), start.date.test = "2019-01-01",
+test.preds.arima(data, order = c(6,1,10), start.date.test = "2019-10-06",
                  transformation = log, inv.transformation = exp,
                  n.pred.ahead = 2, plot.pred = 1)
+?ggsave
+p = last_plot()
+p = p+ ylab("Price")
+p
+ggsave("pred_for_ARMA_model.jpg", path = image.dir, width = width, height = height)
