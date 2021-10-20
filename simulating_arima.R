@@ -1,5 +1,6 @@
 source("Project1/libraries_dirs_and_functions.R")
 
+#Simulating and plotting an ARMA(p,q) model
 sim.arima = function(data, start.date, end.date, n.sim = 1, ar = 0, ma = NULL, differencing = 0, plot = TRUE, sd.innov = "estimate",
                      plot.truth.against.sim = FALSE,
                      transformation = function(x) return(x),
@@ -98,7 +99,7 @@ sim.arima.log.plot <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 5, ar 
                                 seed=10)
 ggsave("sim.arima.plot.jpg", path = image.dir, width = width, height = height)
 
-
+#Running 10 000 simulations of the chosen ARMA model
 df.sim.arima.log <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 10000, ar = ar.coef, ma = ma.coef, differencing = 1,
                                 sd.innov = sigma,
                                 plot=FALSE,

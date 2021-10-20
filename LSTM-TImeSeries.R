@@ -1,28 +1,34 @@
 source("Project1/libraries_dirs_and_functions.R")
+#Removing missing values from the data set
 data=data[-which(is.na(data$Price)),]
 
-
+#Creating a data set with log-transfirmation and differencing
 data.log.diff = data.frame(Date = data$Date[-1], Price = diff(log(data$Price)))
 
 prediction <- 10
 lag <- prediction
 batch_size = 50
 
-
-scale_factors <- c(mean(data.log.diff$Price, na.rm=TRUE), sd(data.log.diff$Price, na.rm=TRUE))
+#Finding the mean and the standard deviation on the log-transformed differenced 
+#data
+scale_factors <- c(mean(data.log.diff$Price, na.rm=TRUE),
+                   sd(data.log.diff$Price, na.rm=TRUE))
 scale_factors
 
+#Scaling the price
 scaled_price <- data.log.diff %>%
   dplyr::select(Price) %>%
   dplyr::mutate(Price = (Price - scale_factors[1]) / scale_factors[2])
 
+#Defining the training, validation and test sets
 start.date.test = as.Date("2019-10-06")
 end.date.test = max(data$Date)
 start.date.validation = as.Date("2019-10-06")
 end.date.validation = start.date.test
 scaled_train <- scaled_price[data.log.diff$Date < start.date.validation - lag,]
 if(start.date.test!=start.date.validation){
-  scaled_validation <- scaled_price[data.log.diff$Date < start.date.test & data.log.diff$Date >=start.date.validation,]
+  scaled_validation <- scaled_price[data.log.diff$Date < start.date.test & 
+                                      data.log.diff$Date >=start.date.validation,]
 }
 scaled_test <- scaled_price[data.log.diff$Date >= start.date.test - lag,]
 
@@ -80,13 +86,16 @@ x_train_arr = get_x_data(scaled_train, lag = lag, prediction = prediction)
 y_train_arr = get_y_data(scaled_train, lag = lag, prediction = prediction)
 
 if(start.date.test!=start.date.validation){
-  x_validation_arr = get_x_data(scaled_validation, lag = lag, prediction = prediction)
-  y_validation_arr = get_y_data(scaled_validation, lag = lag, prediction = prediction)
+  x_validation_arr = get_x_data(scaled_validation, lag = lag, prediction = 
+                                  prediction)
+  y_validation_arr = get_y_data(scaled_validation, lag = lag, prediction = 
+                                  prediction)
 }
 
 x_pred_arr = get_x_data(scaled_test, lag = lag, prediction = 1)
 y_pred_arr_truth = get_y_data(scaled_test, lag = lag, prediction = 1)
-y_pred_one_ahead_truth = data$Price[data$Date >= start.date.test & data$Date <= end.date.test]
+y_pred_one_ahead_truth = data$Price[data$Date >= start.date.test & data$Date <= 
+                                      end.date.test]
 
 
 create_lstm_model = function(batch_size) {
@@ -113,19 +122,27 @@ create_lstm_model = function(batch_size) {
 
 lstm_model = create_lstm_model(batch_size)
 
-train.indices.to.use = (dim(x_train_arr)[[1]]-batch_size * floor(dim(x_train_arr)[[1]] / batch_size)+1):(dim(x_train_arr)[[1]])
-validation.indices.to.use = (dim(x_validation_arr)[[1]]-batch_size * floor(dim(x_validation_arr)[[1]] / batch_size)+1):(dim(x_validation_arr)[[1]])
+train.indices.to.use = (dim(x_train_arr)[[1]]-batch_size * 
+                          floor(dim(x_train_arr)[[1]] / batch_size)+1):
+  (dim(x_train_arr)[[1]])
+validation.indices.to.use = (dim(x_validation_arr)[[1]]-batch_size * 
+                               floor(dim(x_validation_arr)[[1]] / batch_size)+1):
+  (dim(x_validation_arr)[[1]])
 length(validation.indices.to.use)
 
 lstm_model %>% fit(
-  x = array(x_train_arr[train.indices.to.use,,], dim = c(length(train.indices.to.use),lag,1)),
-  y = array(y_train_arr[train.indices.to.use,,], dim = c(length(train.indices.to.use),lag,1)),
+  x = array(x_train_arr[train.indices.to.use,,], dim = 
+              c(length(train.indices.to.use),lag,1)),
+  y = array(y_train_arr[train.indices.to.use,,], dim = 
+              c(length(train.indices.to.use),lag,1)),
   batch_size = batch_size,
   epochs = 20,
   verbose = 1,
   shuffle = FALSE,
-  #validation_data=list(array(x_validation_arr[validation.indices.to.use,,],dim=c(length(validation.indices.to.use),lag,1)),
-                     # 3 array(y_validation_arr[validation.indices.to.use,,],dim=c(length(validation.indices.to.use),lag,1)))
+  #validation_data=list(array(x_validation_arr[validation.indices.to.use,,],
+  #dim=c(length(validation.indices.to.use),lag,1)),
+                     # 3 array(y_validation_arr[validation.indices.to.use,,],
+  #dim=c(length(validation.indices.to.use),lag,1)))
 )
 
 
@@ -150,14 +167,18 @@ dates.to.pred = data$Date[data$Date >= start.date.test & data$Date <= end.date.t
 plot(y_pred_arr_truth[,1,1] * scale_factors[2] + scale_factors[1], type = "l")
 lines(lstm_forecast[,1], col = "red")
 
-pred1 = exp(lstm_forecast[,1] + log(data$Price[data$Date >= start.date.test-1 & data$Date <= end.date.test-1]))
+pred1 = exp(lstm_forecast[,1] + log(data$Price[data$Date >= start.date.test-1 &
+                                                 data$Date <= end.date.test-1]))
 plot(dates.to.pred, pred1, type = "l", col = "red")
 lines(dates.to.pred, y_pred_one_ahead_truth)
 
 # ggplot
-df.plot.lstm = data.frame(pred = pred1, dates = dates.to.pred, pred.one.day.ahead = y_pred_one_ahead_truth)
-ggplot(data = df.plot.lstm, aes(x = dates, y = pred)) + geom_line(aes(col = "Pred")) + 
-  geom_line(aes(x = dates, y = pred.one.day.ahead, col = "Truth")) + guides(col = guide_legend(title = "Line")) +
+df.plot.lstm = data.frame(pred = pred1, dates = dates.to.pred, 
+                          pred.one.day.ahead = y_pred_one_ahead_truth)
+ggplot(data = df.plot.lstm, aes(x = dates, y = pred)) + 
+  geom_line(aes(col = "Pred")) + 
+  geom_line(aes(x = dates, y = pred.one.day.ahead, col = "Truth")) + 
+  guides(col = guide_legend(title = "Line")) +
   ggtitle("Prediction 1 day ahead for LSTM model") +
   ylab("Price") + xlab("Date")
 ggsave("pred_lstm_one_day.jpg", path = image.dir, width = width, height = height)
@@ -166,16 +187,22 @@ ggsave("pred_lstm_one_day.jpg", path = image.dir, width = width, height = height
 df.eval.pred1 = data.frame(mae = mean(abs(pred1 - y_pred_one_ahead_truth)),
                            mse = mean((pred1 - y_pred_one_ahead_truth)^2))
 
-y_last_step = data$Price[data$Date >= (start.date.test - 1) & data$Date <= (end.date.test - 1)]
+y_last_step = data$Price[data$Date >= (start.date.test - 1) & data$Date <= 
+                           (end.date.test - 1)]
 data$Date[data$Date >= (start.date.test - 1) & data$Date <= (end.date.test - 1)]
 
-df.eval.pred1$correct.direction = mean(sign(pred1 - y_last_step) == sign(y_pred_one_ahead_truth - y_last_step))
+df.eval.pred1$correct.direction = mean(sign(pred1 - y_last_step) == 
+                                         sign(y_pred_one_ahead_truth - 
+                                                y_last_step))
 df.eval.pred1
 
-df.eval.pred1$passive = data$Price[data$Date == end.date.test] / data$Price[data$Date == start.date.test]
+df.eval.pred1$passive = data$Price[data$Date == end.date.test] / 
+  data$Price[data$Date == start.date.test]
 true.difference.percent = (y_pred_one_ahead_truth - y_last_step) / y_last_step
-df.eval.pred1$active = prod(ifelse(sign(pred1 - y_last_step) == 1, 1 + true.difference.percent, 1))
-prod(ifelse(rep(1, length(y_pred_one_ahead_truth))[-1] == 1, 1 + true.difference.percent[-1], 1))
+df.eval.pred1$active = prod(ifelse(sign(pred1 - y_last_step) == 1, 1 + 
+                                     true.difference.percent, 1))
+prod(ifelse(rep(1, length(y_pred_one_ahead_truth))[-1] == 1, 1 + 
+              true.difference.percent[-1], 1))
 df.eval.pred1
 
 # lstm_forecast <- lstm_model_pred %>%
@@ -185,7 +212,8 @@ df.eval.pred1
 # lstm_forecast <- lstm_forecast * scale_factors[2] + scale_factors[1]
 # lstm_forecast
 # 
-# apply(abs(lstm_forecast-(y_train_arr[,,1]* scale_factors[2] + scale_factors[1])),2,mean)
+# apply(abs(lstm_forecast-(y_train_arr[,,1]* scale_factors[2] + 
+#scale_factors[1])),2,mean)
 # plot(lstm_forecast[,1], type="l")
 # plot(y_train_arr[,1,1]* scale_factors[2] + scale_factors[1], type = "l")
 # lines(lstm_forecast[,1])
