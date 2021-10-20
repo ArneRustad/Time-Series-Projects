@@ -6,6 +6,11 @@ library(data.table)
 library(stringr)
 library(progress)
 library(xtable)
+library(keras)
+library(tensorflow)
+#install.packages('Rcpp')
+library(Rcpp)
+
 
 aicc = function(model){
   n = model$nobs
