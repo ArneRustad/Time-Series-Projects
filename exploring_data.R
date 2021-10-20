@@ -1,3 +1,4 @@
+# ---- exploration
 source("Project1/libraries_dirs_and_functions.R")
 width = 6
 height = 4
