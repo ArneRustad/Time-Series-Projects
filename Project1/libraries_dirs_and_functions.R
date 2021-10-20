@@ -24,7 +24,7 @@ result.dir = "Project1/Results/"
 
 
 # Fetch data
-data= read.csv("bitcoin_data.csv")
+data= read.csv("Project1/bitcoin_data.csv")
 
 
 # Change column type and format of missing values from . to NA
