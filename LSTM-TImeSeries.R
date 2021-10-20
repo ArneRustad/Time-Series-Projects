@@ -4,7 +4,7 @@ data=data[-which(is.na(data$Price)),]
 
 data.log.diff = data.frame(Date = data$Date[-1], Price = diff(log(data$Price)))
 
-prediction <- 5
+prediction <- 10
 lag <- prediction
 batch_size = 50
 
@@ -21,7 +21,9 @@ end.date.test = max(data$Date)
 start.date.validation = as.Date("2019-10-06")
 end.date.validation = start.date.test
 scaled_train <- scaled_price[data.log.diff$Date < start.date.validation - lag,]
-scaled_validation <- scaled_price[data.log.diff$Date < start.date.test & data.log.diff$Date >=start.date.validation,]
+if(start.date.test!=start.date.validation){
+  scaled_validation <- scaled_price[data.log.diff$Date < start.date.test & data.log.diff$Date >=start.date.validation,]
+}
 scaled_test <- scaled_price[data.log.diff$Date >= start.date.test - lag,]
 
 length(scaled_train)
@@ -77,8 +79,10 @@ get_y_data <- function(scaled_data, lag, prediction){
 x_train_arr = get_x_data(scaled_train, lag = lag, prediction = prediction)
 y_train_arr = get_y_data(scaled_train, lag = lag, prediction = prediction)
 
-x_validation_arr = get_x_data(scaled_validation, lag = lag, prediction = prediction)
-y_validation_arr = get_y_data(scaled_validation, lag = lag, prediction = prediction)
+if(start.date.test!=start.date.validation){
+  x_validation_arr = get_x_data(scaled_validation, lag = lag, prediction = prediction)
+  y_validation_arr = get_y_data(scaled_validation, lag = lag, prediction = prediction)
+}
 
 x_pred_arr = get_x_data(scaled_test, lag = lag, prediction = 1)
 y_pred_arr_truth = get_y_data(scaled_test, lag = lag, prediction = 1)
@@ -121,10 +125,8 @@ lstm_model %>% fit(
   verbose = 1,
   shuffle = FALSE,
   #validation_data=list(array(x_validation_arr[validation.indices.to.use,,],dim=c(length(validation.indices.to.use),lag,1)),
-                      3 array(y_validation_arr[validation.indices.to.use,,],dim=c(length(validation.indices.to.use),lag,1)))
+                     # 3 array(y_validation_arr[validation.indices.to.use,,],dim=c(length(validation.indices.to.use),lag,1)))
 )
-
-# -------------------------------------------------------------------------
 
 
 
