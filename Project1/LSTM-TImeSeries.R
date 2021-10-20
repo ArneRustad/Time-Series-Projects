@@ -166,11 +166,13 @@ lstm_model %>% fit(
 
 lstm_model_pred = create_lstm_model(1)
 lstm_model_pred$set_weights(lstm_model$get_weights())
-#lstm_model_pred$weights[[2]] - lstm_model$weights[[2]] # checking that model weights appear to be copied correcty
+# checking that model weights appear to be copied correcty
+#lstm_model_pred$weights[[2]] - lstm_model$weights[[2]] 
 
-#lstm_model_pred$save("Project1/Models/model_pred") # save prediction model
-
-#lstm_model_pred = load_model_tf("Project1/Models/insane_model_pred") # load prediction model
+# save prediction model
+#lstm_model_pred$save("Project1/Models/model_pred") 
+# load prediction model
+#lstm_model_pred = load_model_tf("Project1/Models/insane_model_pred")
 
 # Predicting and rescaling to restore the original values of the log differenced
 lstm_forecast <- lstm_model_pred %>%
@@ -185,7 +187,8 @@ lines(lstm_forecast[,1], col = "red")
 pred1 = exp(lstm_forecast[,1] + log(data$Price[data$Date >= start.date.test-1 &
                                                  data$Date <= end.date.test-1]))
 
-#Plotting the predictions against the true values (both on log transformed differenced form)
+#Plotting the predictions against the true values 
+# (both on log transformed differenced form)
 plot(dates.to.pred, pred1, type = "l", col = "red")
 lines(dates.to.pred, y_pred_one_ahead_truth)
 

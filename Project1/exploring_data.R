@@ -56,8 +56,16 @@ df.log.trend.long = pivot_longer(df.log.trend, -Date)
 ggplot(df.log.trend.long, aes(x = Date, y = value, col = name)) + geom_line()
 
 par(mfrow=c(1,1))
-acf(df.log.trend$Price - df.log.trend$Trend.poly1, na.action = na.pass)
-pacf(df.log.trend$Price - df.log.trend$Trend.poly1, na.action = na.pass)
+jpeg(file=paste0(image.dir,"acf-log-detrended.jpeg"))
+acf(df.log.trend$Price - df.log.trend$Trend.poly1, na.action = na.pass,
+    main = "ACF for detrended log transformed data.")
+dev.off()
+
+jpeg(file=paste0(image.dir,"pacf-log-detrended.jpeg"))
+pacf(df.log.trend$Price - df.log.trend$Trend.poly1, na.action = na.pass,
+     main = "PACF for detrended log transformed data") 
+dev.off()
+
 plot(data$Date, df.log.trend$Price - df.log.trend$Trend.poly1, type = "l",
      main = "Log transformed then detrended")
 
