@@ -154,6 +154,15 @@ pred1 = exp(lstm_forecast[,1] + log(data$Price[data$Date >= start.date.test-1 & 
 plot(dates.to.pred, pred1, type = "l", col = "red")
 lines(dates.to.pred, y_pred_one_ahead_truth)
 
+# ggplot
+df.plot.lstm = data.frame(pred = pred1, dates = dates.to.pred, pred.one.day.ahead = y_pred_one_ahead_truth)
+ggplot(data = df.plot.lstm, aes(x = dates, y = pred)) + geom_line(aes(col = "Pred")) + 
+  geom_line(aes(x = dates, y = pred.one.day.ahead, col = "Truth")) + guides(col = guide_legend(title = "Line")) +
+  ggtitle("Prediction 1 day ahead for LSTM model") +
+  ylab("Price") + xlab("Date")
+ggsave("pred_lstm_one_day.jpg", path = image.dir, width = width, height = height)
+
+
 df.eval.pred1 = data.frame(mae = mean(abs(pred1 - y_pred_one_ahead_truth)),
                            mse = mean((pred1 - y_pred_one_ahead_truth)^2))
 

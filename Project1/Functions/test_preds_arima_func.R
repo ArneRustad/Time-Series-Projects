@@ -95,8 +95,8 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
 test.preds.arima(data, order = c(6,1,10), start.date.test = "2019-10-06",
                  transformation = log, inv.transformation = exp,
                  n.pred.ahead = 2, plot.pred = 1)
-?ggsave
+
 p = last_plot()
-p = p+ ylab("Price")
+p = p+ ylab("Price")  + ggtitle("Prediction 1 day ahead for ARMA model plotted against true Bitcoin price")
 p
 ggsave("pred_for_ARMA_model.jpg", path = image.dir, width = width, height = height)
