@@ -1,7 +1,8 @@
 source("Project1/libraries_dirs_and_functions.R")
 
 #Simulating and plotting an ARMA(p,q) model
-sim.arima = function(data, start.date, end.date, n.sim = 1, ar = 0, ma = NULL, differencing = 0, plot = TRUE, sd.innov = "estimate",
+sim.arima = function(data, start.date, end.date, n.sim = 1, ar = 0, ma = NULL, 
+                     differencing = 0, plot = TRUE, sd.innov = "estimate",
                      plot.truth.against.sim = FALSE,
                      transformation = function(x) return(x),
                      plot.transformed = FALSE,
@@ -35,28 +36,35 @@ sim.arima = function(data, start.date, end.date, n.sim = 1, ar = 0, ma = NULL, d
   
   if (as.character(sd.innov) == "estimate") sd.innov = sd(innov)
   
-  df.sim = data.table(Date = rep(dates.to.sim, times = n.sim), n.sim = rep(1:n.sim, each = n), Price = as.numeric(NA),
+  df.sim = data.table(Date = rep(dates.to.sim, times = n.sim), n.sim = 
+                        rep(1:n.sim, each = n), Price = as.numeric(NA),
                       Simulated = "Simulated ts")
   curr.rows = 1:n
   for (i in seq_len(n.sim)) {
-    sim = arima.sim(model = list(order = order, ar = ar, ma = ma), n = (n-differencing),
+    sim = arima.sim(model = list(order = order, ar = ar, ma = ma), n = 
+                      (n-differencing),
                     n.start = length(innov), start.innov = innov, sd = sd.innov)
     df.sim[curr.rows, Price := sim]
     curr.rows = curr.rows + n
   }
   
-  if(differencing == 1) {df.sim$Price = df.sim$Price + transformation(data$Price[data$Date == start.date])}
+  if(differencing == 1) {df.sim$Price = df.sim$Price + 
+    transformation(data$Price[data$Date == start.date])}
   if (!plot.transformed) df.sim$Price = inv.transformation(df.sim$Price)
   
   if (plot) {
-    p = ggplot(df.sim, aes(x = Date, y = Price, col = as.factor(n.sim), linetype = Simulated)) + geom_line() +
-      guides(col = guide_legend(title = "Sim no."), linetype= guide_legend(title=NULL))+
-      scale_linetype_manual(values=c("dotted","solid")) + ggtitle("Bitcoin time series and simualtions")+ylab(y.lab)
+    p = ggplot(df.sim, aes(x = Date, y = Price, col = as.factor(n.sim), 
+                           linetype = Simulated)) + geom_line() +
+      guides(col = guide_legend(title = "Sim no."), linetype= 
+               guide_legend(title=NULL))+
+      scale_linetype_manual(values=c("dotted","solid")) + 
+      ggtitle("Bitcoin time series and simualtions")+ylab(y.lab)
     if (plot.truth.against.sim) {
       dt.truth = as.data.table(data[data$Date <= end.date,])
       dt.truth$Simulated = "True ts"
       if (plot.transformed) dt.truth$Price = transformation(dt.truth$Price)
-      p = p + geom_line(aes(x = Date, y = Price, linetype = Simulated), col = "black", data = dt.truth)
+      p = p + geom_line(aes(x = Date, y = Price, linetype = Simulated), 
+                        col = "black", data = dt.truth)
     }
     print(p)
   }
@@ -64,7 +72,8 @@ sim.arima = function(data, start.date, end.date, n.sim = 1, ar = 0, ma = NULL, d
  return(df.sim)
 }
 
-#sim.arima(data, "2019-10-01", "2021-01-01", n.sim = 1, ar = c(0.99), ma = c(0.8), differencing = 0,
+#sim.arima(data, "2019-10-01", "2021-01-01", n.sim = 1, ar = c(0.99), ma = 
+#c(0.8), differencing = 0,
 #         sd.innov = "estimate",
 #          plot.truth.against.sim = TRUE)
 
@@ -77,7 +86,8 @@ sigma=sqrt(fit$sigma2)
 xtable(t(data.frame(fit$coef,sqrt(diag(fit$var.coef)))))
 data.frame(fit$coef,sqrt(diag(fit$var.coef)))
 
-sim.arima.log.plot <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 5, ar = ar.coef, ma = ma.coef, differencing = 1,
+sim.arima.log.plot <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 5,
+                                ar = ar.coef, ma = ma.coef, differencing = 1,
           sd.innov = sigma,
           plot.truth.against.sim = TRUE,
           transformation = log,
@@ -86,10 +96,12 @@ sim.arima.log.plot <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 5, ar 
           y.lab="log(Price) (USD)",
           seed=10)
 
-ggsave("sim.arima.log.plot.jpg", path = image.dir, width = width, height = height)
+ggsave("sim.arima.log.plot.jpg", path = image.dir, width = width, height = 
+         height)
 
 
-sim.arima.log.plot <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 5, ar = ar.coef, ma = ma.coef, differencing = 1,
+sim.arima.log.plot <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 5,
+                                ar = ar.coef, ma = ma.coef, differencing = 1,
                                 sd.innov = sigma,
                                 plot.truth.against.sim = FALSE,
                                 transformation = log,
@@ -100,12 +112,14 @@ sim.arima.log.plot <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 5, ar 
 ggsave("sim.arima.plot.jpg", path = image.dir, width = width, height = height)
 
 #Running 10 000 simulations of the chosen ARMA model
-df.sim.arima.log <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 10000, ar = ar.coef, ma = ma.coef, differencing = 1,
+df.sim.arima.log <- sim.arima(data, "2019-10-06", "2021-10-06", n.sim = 10000,
+                              ar = ar.coef, ma = ma.coef, differencing = 1,
                                 sd.innov = sigma,
                                 plot=FALSE,
                                 transformation = log,
                                 inv.transformation = exp,
                                 seed=10)
 
-dt.sim.arima.log=as.data.table(df.sim.arima.log%>%mutate(lower.than.start = (Price<Price[1])))
+dt.sim.arima.log=as.data.table(df.sim.arima.log%>%mutate(lower.than.start =
+                                                           (Price<Price[1])))
 sum(dt.sim.arima.log[,sum(lower.than.start),by=n.sim]$V1 == 0)

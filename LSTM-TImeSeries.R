@@ -82,6 +82,7 @@ get_y_data <- function(scaled_data, lag, prediction){
   return(y_arr)
 }
 
+#Creating the training set
 x_train_arr = get_x_data(scaled_train, lag = lag, prediction = prediction)
 y_train_arr = get_y_data(scaled_train, lag = lag, prediction = prediction)
 
@@ -92,12 +93,15 @@ if(start.date.test!=start.date.validation){
                                   prediction)
 }
 
+#Creating the test set
 x_pred_arr = get_x_data(scaled_test, lag = lag, prediction = 1)
 y_pred_arr_truth = get_y_data(scaled_test, lag = lag, prediction = 1)
+#Actual  value from the original data set
 y_pred_one_ahead_truth = data$Price[data$Date >= start.date.test & data$Date <= 
                                       end.date.test]
 
 
+#Function for creating a LSTM model
 create_lstm_model = function(batch_size) {
   lstm_model <- keras_model_sequential()
   
@@ -120,6 +124,7 @@ create_lstm_model = function(batch_size) {
   return(lstm_model)
 }
 
+#Creating our LSTM model
 lstm_model = create_lstm_model(batch_size)
 
 train.indices.to.use = (dim(x_train_arr)[[1]]-batch_size * 
@@ -130,6 +135,7 @@ validation.indices.to.use = (dim(x_validation_arr)[[1]]-batch_size *
   (dim(x_validation_arr)[[1]])
 length(validation.indices.to.use)
 
+#Fitting the model
 lstm_model %>% fit(
   x = array(x_train_arr[train.indices.to.use,,], dim = 
               c(length(train.indices.to.use),lag,1)),
@@ -172,7 +178,7 @@ pred1 = exp(lstm_forecast[,1] + log(data$Price[data$Date >= start.date.test-1 &
 plot(dates.to.pred, pred1, type = "l", col = "red")
 lines(dates.to.pred, y_pred_one_ahead_truth)
 
-# ggplot
+#Plotting the predictions against the true values
 df.plot.lstm = data.frame(pred = pred1, dates = dates.to.pred, 
                           pred.one.day.ahead = y_pred_one_ahead_truth)
 ggplot(data = df.plot.lstm, aes(x = dates, y = pred)) + 
@@ -184,6 +190,8 @@ ggplot(data = df.plot.lstm, aes(x = dates, y = pred)) +
 ggsave("pred_lstm_one_day.jpg", path = image.dir, width = width, height = height)
 
 
+#Calculating MSE, MAE, correct direction, passive and active investment for
+#comparison with other models
 df.eval.pred1 = data.frame(mae = mean(abs(pred1 - y_pred_one_ahead_truth)),
                            mse = mean((pred1 - y_pred_one_ahead_truth)^2))
 
