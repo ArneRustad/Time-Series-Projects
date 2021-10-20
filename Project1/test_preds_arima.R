@@ -11,7 +11,6 @@ plot.pred = 1
 width = 6
 height = 4
 
-
 #Function that predicts one day ahead using the ARMA model
 test.preds.arima = function(data, order, start.date.test, transformation = NULL,
                             inv.transformation = NULL, n.pred.ahead = 1,
@@ -57,8 +56,9 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
     y.column = sym(paste0("Pred", plot.pred))
     p = ggplot(data.test, aes(x = Date, y = !!y.column, col = "Pred")) + geom_line() +
       guides(col = guide_legend(title = "Line")) + ylab(paste0("Pred", plot.pred)) +
-      ggtitle(sprintf("Prediction %d days ahead for ARMA model plotted against 
-                      true Bitcoin price", plot.pred))
+      ggtitle(sprintf("Prediction %d day(s) ahead for ARMA model plotted against 
+                      true Bitcoin price", plot.pred)) +
+      ylab("Price")
     p = p + geom_line(data = data, aes(x = Date, y = Price, col = "Truth"))
     print(p)
   }
@@ -109,6 +109,5 @@ test.preds.arima(data, order = c(6,1,10), start.date.test = "2019-10-06",
                  n.pred.ahead = 2, plot.pred = 1)
 
 p = last_plot()
-p = p+ ylab("Price")  + ggtitle("Prediction 1 day ahead for ARMA model")
 p
 ggsave("pred_for_ARMA_model.jpg", path = image.dir, width = width, height = height)

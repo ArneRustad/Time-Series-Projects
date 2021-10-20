@@ -36,7 +36,7 @@ length(scaled_train)
 length(scaled_test)
 length(scaled_validation)
 
-# we lag the data 11 times and arrange that into columns
+# functions for lagging the data 10 times and arranging into columns
 get_x_data <- function(scaled_data, lag, prediction){
   scaled_data <- as.matrix(scaled_data)
   x_data <- t(sapply(
@@ -86,6 +86,7 @@ get_y_data <- function(scaled_data, lag, prediction){
 x_train_arr = get_x_data(scaled_train, lag = lag, prediction = prediction)
 y_train_arr = get_y_data(scaled_train, lag = lag, prediction = prediction)
 
+# If wanted, create the validation set
 if(start.date.test!=start.date.validation){
   x_validation_arr = get_x_data(scaled_validation, lag = lag, prediction = 
                                   prediction)
@@ -101,7 +102,10 @@ y_pred_one_ahead_truth = data$Price[data$Date >= start.date.test & data$Date <=
                                       end.date.test]
 
 
-#Function for creating a LSTM model
+#Function for creating a LSTM model. 
+# Takes batch size as a parameter to make it easy to create a new model,
+# copy weights and then be able to predict with a different batch size
+# than training batch size
 create_lstm_model = function(batch_size) {
   lstm_model <- keras_model_sequential()
   
@@ -127,13 +131,24 @@ create_lstm_model = function(batch_size) {
 #Creating our LSTM model
 lstm_model = create_lstm_model(batch_size)
 
+# Size of training set and validation set need to be a multiple of batch size
 train.indices.to.use = (dim(x_train_arr)[[1]]-batch_size * 
                           floor(dim(x_train_arr)[[1]] / batch_size)+1):
   (dim(x_train_arr)[[1]])
-validation.indices.to.use = (dim(x_validation_arr)[[1]]-batch_size * 
-                               floor(dim(x_validation_arr)[[1]] / batch_size)+1):
-  (dim(x_validation_arr)[[1]])
-length(validation.indices.to.use)
+
+if(start.date.test!=start.date.validation){
+  validation.indices.to.use = (dim(x_validation_arr)[[1]]-batch_size * 
+                                 floor(dim(x_validation_arr)[[1]] / batch_size)+1):
+    (dim(x_validation_arr)[[1]])
+  
+  validation_data_list = list(array(x_validation_arr[validation.indices.to.use,,],
+                                    dim=c(length(validation.indices.to.use),lag,1)),
+                              array(y_validation_arr[validation.indices.to.use,,],
+                                    dim=c(length(validation.indices.to.use),lag,1)))
+} else {
+  validation_data_list = NULL
+}
+
 
 #Fitting the model
 lstm_model %>% fit(
@@ -145,23 +160,17 @@ lstm_model %>% fit(
   epochs = 20,
   verbose = 1,
   shuffle = FALSE,
-  #validation_data=list(array(x_validation_arr[validation.indices.to.use,,],
-  #dim=c(length(validation.indices.to.use),lag,1)),
-                     # 3 array(y_validation_arr[validation.indices.to.use,,],
-  #dim=c(length(validation.indices.to.use),lag,1)))
+  validation_data = validation_data_list
 )
 
 
-
-#lstm_model$save("Project1/Models/model")
-
 lstm_model_pred = create_lstm_model(1)
 lstm_model_pred$set_weights(lstm_model$get_weights())
-#lstm_model_pred$weights[[2]] - lstm_model$weights[[2]]
+#lstm_model_pred$weights[[2]] - lstm_model$weights[[2]] # checking that model weights appear to be copied correcty
 
-#lstm_model_pred$save("Project1/Models/model_pred")
+#lstm_model_pred$save("Project1/Models/model_pred") # save prediction model
 
-#lstm_model_pred = load_model_tf("Project1/Models/insane_model_pred")
+#lstm_model_pred = load_model_tf("Project1/Models/insane_model_pred") # load prediction model
 
 # Predicting and rescaling to restore the original values of the log differenced
 lstm_forecast <- lstm_model_pred %>%
@@ -175,6 +184,8 @@ lines(lstm_forecast[,1], col = "red")
 
 pred1 = exp(lstm_forecast[,1] + log(data$Price[data$Date >= start.date.test-1 &
                                                  data$Date <= end.date.test-1]))
+
+#Plotting the predictions against the true values (both on log transformed differenced form)
 plot(dates.to.pred, pred1, type = "l", col = "red")
 lines(dates.to.pred, y_pred_one_ahead_truth)
 
@@ -202,27 +213,11 @@ data$Date[data$Date >= (start.date.test - 1) & data$Date <= (end.date.test - 1)]
 df.eval.pred1$correct.direction = mean(sign(pred1 - y_last_step) == 
                                          sign(y_pred_one_ahead_truth - 
                                                 y_last_step))
-df.eval.pred1
 
 df.eval.pred1$passive = data$Price[data$Date == end.date.test] / 
   data$Price[data$Date == start.date.test]
 true.difference.percent = (y_pred_one_ahead_truth - y_last_step) / y_last_step
 df.eval.pred1$active = prod(ifelse(sign(pred1 - y_last_step) == 1, 1 + 
                                      true.difference.percent, 1))
-prod(ifelse(rep(1, length(y_pred_one_ahead_truth))[-1] == 1, 1 + 
-              true.difference.percent[-1], 1))
+
 df.eval.pred1
-
-# lstm_forecast <- lstm_model_pred %>%
-#   predict(x_train_arr, batch_size = 1) %>%
-#   .[, , 1]
-# # we need to rescale the data to restore the original values
-# lstm_forecast <- lstm_forecast * scale_factors[2] + scale_factors[1]
-# lstm_forecast
-# 
-# apply(abs(lstm_forecast-(y_train_arr[,,1]* scale_factors[2] + 
-#scale_factors[1])),2,mean)
-# plot(lstm_forecast[,1], type="l")
-# plot(y_train_arr[,1,1]* scale_factors[2] + scale_factors[1], type = "l")
-# lines(lstm_forecast[,1])
-

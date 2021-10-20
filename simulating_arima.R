@@ -72,12 +72,6 @@ sim.arima = function(data, start.date, end.date, n.sim = 1, ar = 0, ma = NULL,
  return(df.sim)
 }
 
-#sim.arima(data, "2019-10-01", "2021-01-01", n.sim = 1, ar = c(0.99), ma = 
-#c(0.8), differencing = 0,
-#         sd.innov = "estimate",
-#          plot.truth.against.sim = TRUE)
-
-#mod.arima.log.differenced.best
 fit=arima(log(data$Price), order=c(6,1,10))
 ar.coef=fit$coef[grep("^ar",names(fit$coef))]
 ma.coef=fit$coef[grep("^ma",names(fit$coef))]

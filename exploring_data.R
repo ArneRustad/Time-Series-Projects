@@ -119,30 +119,3 @@ ggplot(data.frame(Date = data$Date[-1], Price = diff(log(data$Price))),
   theme(plot.margin = unit(c(0.5,0.5,0,0), "cm"))
 ggsave("plot_differenced_log_ts.jpg", path = image.dir, width = width, 
        height = height)
-
-
-# Diagnosting if residuals for ARMA model for differenced log 
-#transformed time series appear as white noise
-mean(mod.arima.log.differenced.best$residuals, na.rm = TRUE)
-
-jpeg(file=paste0(image.dir,"plot_acf_residuals_differenced_log_ts.jpg"))
-acf(mod.arima.log.differenced.best$residuals, na.action = na.pass, main 
-    = "Autocorrelation of residuals from ARMA model")
-dev.off()
-
-
-Box.test(mod.arima.log.differenced.best$residuals)
-ggplot(data.frame(Residual = mod.arima.log.differenced.best$residuals),
-       aes( x= seq_along(Residual), y = Residual)) +
-  geom_line() + 
-  ggtitle("Residuals from model on differenced log transformed time series") +
-  xlab("Residual no.") + ylab("Value")
-ggsave("plot_residuals_differenced_log_ts.jpg", 
-       path = image.dir, width = width, height = height)
-
-test.preds.arima(data, order = c(0,1,9), start.date.test = "2019-01-01",
-                 transformation = log, inv.transformation = exp,
-                 n.pred.ahead = 2, plot.pred = TRUE)
-is.null(exp)
-sum(is.na(c(log, exp)))
-
