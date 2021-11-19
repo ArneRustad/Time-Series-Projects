@@ -1,12 +1,5 @@
 source("Project1/libraries_dirs_and_functions.R")
 
-order = c(1,1,1)
-start.date.test = "2019-01-01"
-transformation = log
-inv.transformation = exp
-n.pred.ahead = 5
-plot.pred = 1
-
 #Specifying dimensions of plots
 width = 6
 height = 4
@@ -104,7 +97,7 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
 }
 
 #Running the prediction for our choice of ARMA model
-test.preds.arima(data, order = c(6,1,10), start.date.test = "2019-10-06",
+test.preds.arima(data, order = c(2,1,0), start.date.test = "2019-10-06",
                  transformation = log, inv.transformation = exp,
                  n.pred.ahead = 2, plot.pred = 1)
 

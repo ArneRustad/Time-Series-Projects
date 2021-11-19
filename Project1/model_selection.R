@@ -23,7 +23,7 @@ for (i in 1:nrow(df.aic.log.differenced)) {
   pb$tick()
 }
  df.aic.log.differenced = 
-   df.aic.log.differenced[order(df.aic.log.differenced$AICc, decreasing = TRUE),]
+   df.aic.log.differenced[order(df.aic.log.differenced$AICc, decreasing = FALSE),]
 df.aic.log.differenced
 fwrite(df.aic.log.differenced, paste0(result.dir, "df_aicc_log_diff.csv"))
 df.aic.log.differenced = fread(paste0(result.dir, "df_aicc_log_diff.csv"))
