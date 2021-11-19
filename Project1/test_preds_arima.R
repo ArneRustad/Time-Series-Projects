@@ -97,7 +97,7 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
 }
 
 #Running the prediction for our choice of ARMA model
-test.preds.arima(data, order = c(2,1,0), start.date.test = "2019-10-06",
+test.preds.arima(data, order = c(2,1,1), start.date.test = "2019-10-06",
                  transformation = log, inv.transformation = exp,
                  n.pred.ahead = 2, plot.pred = 1)
 
