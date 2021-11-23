@@ -1,4 +1,4 @@
-source("Project1/libraries_dirs_and_functions.R")
+source("Project2/libraries_dirs_and_functions.R")
 
 # Choosing GARCH model for differenced log transformed time series
 max.p = 0
@@ -67,7 +67,11 @@ fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_garch_norm_long.c
 
 ggplot(df.log.diff.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = Line, group = Line_all)) +
   geom_line(aes(y = Price, col = "Truth"), data = data.log.diff, alpha = 0.5) +
-  ggtitle("GARCH 0.95 prediction intervals with normal errors for diff log price") + ylab("Diff(log(Price))")
+  ggtitle("GARCH 0.95 prediction intervals with normal errors for diff log price") + ylab("Diff(log(Price))") +
+  ylim(c(min(fread(paste0(result.dir, "df_log_diff_garch_tdist_long.csv"))$value,
+             fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value),
+         max(fread(paste0(result.dir, "df_log_diff_garch_tdist_long.csv"))$value,
+             fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value)))
 
 ggsave("garch_normal_log_diff_pred_confint.jpg", path = image.dir, width = img.width, height = img.height)
 
