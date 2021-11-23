@@ -21,6 +21,7 @@ aicc = function(model){
 }
 
 image.dir = "Project2/Images/"
+dir.create(image.dir, showWarnings = FALSE)
 result.dir = "Project2/Results/"
 
 img.height = 6
