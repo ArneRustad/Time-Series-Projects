@@ -6,7 +6,6 @@ library(data.table)
 library(stringr)
 library(progress)
 library(xtable)
-library(keras)
 library(tensorflow)
 #install.packages('Rcpp')
 library(Rcpp)
@@ -38,3 +37,7 @@ data$Date = as.Date(data$Date)
 data$Price[which(data$Price == ".")] = NA
 data$Price = as.numeric(as.character(data$Price))
 #View(data)
+
+
+# Creating differenced data set
+data.log.diff = na.omit(data.frame(Date = data$Date[-1], Price = diff(log(data$Price))))

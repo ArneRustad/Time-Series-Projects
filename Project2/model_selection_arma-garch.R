@@ -1,26 +1,28 @@
 source("Project2/libraries_dirs_and_functions.R")
 
 # Choosing GARCH model for differenced log transformed time series
-max.p = 0
-max.q = 0
-max.garch.p = 8
-max.garch.q = 8
+max.p = 2
+max.q = 2
+max.garch.p = 2
+max.garch.q = 2
 df.aic.log.differenced = data.table(expand.grid(ar = 0:max.p, ma = 0:max.q, garch.p = 0:max.garch.p, garch.q = 0:max.garch.q))
-
-df.aic.log.differenced = dplyr::filter(df.aic.log.differenced, ! (garch.p == 0 & garch.q == 0))
+View(df.aic.log.differenced)
 
 pb = progress_bar$new(format = "(:spin) [:bar] :percent [Elapsed time: 
                       :elapsedfull || Estimated time remaining: :eta]",
-                      total = (max.p+1)*(max.q+1)*(max.garch.p+1)*(max.garch.q+1), complete = "=", incomplete =
+                      total = (max.p+1)*(max.q+1)*((max.garch.p+1)*(max.garch.q+1)-1), complete = "=", incomplete =
                         "-", current = ">", clear = TRUE)
 
+df.aic.log.differenced = dplyr::filter(df.aic.log.differenced, ! (garch.p == 0 & garch.q == 0))
+
 #Finding AIC, BIC  for different values of p, q in the ARMA model
+
 for (i in 1:nrow(df.aic.log.differenced)) {
   tryCatch(
     {
       model.spec <- ugarchspec(variance.model = list(garchOrder=c(df.aic.log.differenced$garch.p[i], df.aic.log.differenced$garch.q[i]), 
                                                      model="fGARCH", submodel="GARCH"),
-                               mean.model = list(armaOrder = c(0, 0),include.mean=FALSE),
+                               mean.model = list(armaOrder = c(df.aic.log.differenced$ar[i], df.aic.log.differenced$ma[i]),include.mean=FALSE),
                                distribution.model = "std")
       model=ugarchfit(spec=model.spec, data=diff(log(na.omit(data$Price))))
       
@@ -32,25 +34,23 @@ for (i in 1:nrow(df.aic.log.differenced)) {
       df.aic.log.differenced[i, "BIC"] = NA
     }
   )
-
+  
   pb$tick()
 }
 
 df.aic.log.differenced = df.aic.log.differenced[order(df.aic.log.differenced$BIC, decreasing = FALSE),]
 df.aic.log.differenced
-fwrite(df.aic.log.differenced, paste0(result.dir, "df_aic_log_diff_garch_tdist.csv"))
-df.aic.log.differenced = fread(paste0(result.dir, "df_aic_log_diff_garch_tdist.csv"))
+fwrite(df.aic.log.differenced, paste0(result.dir, "df_aic_log_diff_arma-garch_tdist.csv"))
+df.aic.log.differenced = fread(paste0(result.dir, "df_aic_log_diff_arma-garch_tdist.csv"))
 df.aic.log.differenced
 
-# Creating differenced data set
-data.log.diff = na.omit(data.frame(Date = data$Date[-1], Price = diff(log(data$Price))))
 
 # Fitting best GARCH model
 model.spec.best.garch <- ugarchspec(variance.model = list(garchOrder=c(df.aic.log.differenced$garch.p[1], df.aic.log.differenced$garch.q[1]), 
                                                           model="fGARCH", submodel="GARCH"),
-                                    mean.model = list(armaOrder = c(0,0), include.mean=FALSE),
-                                    distribution.model = "std",
-)
+                                    mean.model = list(armaOrder = c(df.aic.log.differenced$ar[1] ,df.aic.log.differenced$ma[1]), include.mean=FALSE),
+                                    distribution.model = "std")
+
 model.best.garch=ugarchfit(spec=model.spec.best.garch, data = data.log.diff$Price)
 model.best.garch
 
@@ -80,11 +80,11 @@ fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_garch_tdist_long.
 
 ggplot(df.log.diff.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = Line, group = Line_all)) +
   geom_line(aes(y = Price, col = "Truth"), data = data.log.diff, alpha = 0.5) +
-  ggtitle("GARCH 0.95 prediction intervals with student t errors for diff log price") + ylab("Diff(log(Price))") + 
+  ggtitle("ARMA-GARCH 0.95 prediction intervals for diff log price") + ylab("Diff(log(Price))") + 
   ylim(c(min(fread(paste0(result.dir, "df_log_diff_garch_tdist_long.csv"))$value,
              fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value),
-       max(fread(paste0(result.dir, "df_log_diff_garch_tdist_long.csv"))$value,
-           fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value)))
+         max(fread(paste0(result.dir, "df_log_diff_garch_tdist_long.csv"))$value,
+             fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value)))
 
 
 print(model.best.garch@fit$coef)
