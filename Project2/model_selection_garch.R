@@ -1,4 +1,4 @@
-source("Project1/libraries_dirs_and_functions.R")
+source("Project2/libraries_dirs_and_functions.R")
 
 # Choosing GARCH model for differenced log transformed time series
 max.p = 0
