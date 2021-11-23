@@ -21,8 +21,11 @@ aicc = function(model){
   return(aicc)
 }
 
-image.dir = "Project1/Images/"
-result.dir = "Project1/Results/"
+image.dir = "Project2/Images/"
+result.dir = "Project2/Results/"
+
+img.height = 6
+img.width = 8
 
 
 # Fetch data
