@@ -89,3 +89,8 @@ ggplot(df.log.diff.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = L
 
 print(model.best.garch@fit$coef)
 ggsave("garch_tdist_log_diff_pred_confint.jpg", path = image.dir, width = img.width, height = img.height)
+
+log.price.for.test.obs = na.remove(log(data$Price))[(start.date.nr-1):(end.date.nr - 1)]
+df.log.garch = data.frame(Date = df.log.diff.garch$Date,
+                          Pred = df.log.diff.garch$Pred + log.price.for.test.obs) 
+
