@@ -87,7 +87,7 @@ df.log.diff.garch = data.frame(Date = dplyr::filter(data.log.diff, Date >= start
                                upper.confint = roll.garch@forecast$VaR$`alpha(98%)`)
 df.log.diff.garch.long = pivot_longer(df.log.diff.garch, -Date, names_to = "Line_all")
 df.log.diff.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", paste(1 - alpha, "confint"))
-fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_arma-egarch_tdist_long.csv"))
+#fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_arma-egarch_tdist_long.csv"))
 
 
 ggplot(df.log.diff.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = Line, group = Line_all)) +
@@ -97,3 +97,5 @@ ggplot(df.log.diff.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = L
 
 print(model.best.garch@fit$coef)
 ggsave("arma-egarch_tdist_log_diff_pred_confint.jpg", path = image.dir, width = img.width, height = img.height)
+
+test_preds(roll.garch@forecast$density$Mu, data, data.log.diff)

@@ -84,7 +84,6 @@ start.date = as.Date("2019-10-06")
 start.date.nr = (1:nrow(data.log.diff))[data.log.diff$Date == (start.date - 1)]
 end.date.nr = nrow(data.log.diff)
 
-?ugarchroll
 roll.garch = ugarchroll(model.spec.best.garch, data = data.log.diff$Price,
                         n.ahead = 1, forecast.length = end.date.nr - (start.date.nr + 1), n.start = start.date.nr)
 head(roll.garch@forecast$density)
@@ -102,7 +101,7 @@ df.log.diff.garch = data.frame(Date = dplyr::filter(data.log.diff, Date >= start
                                upper.confint = pred + half.confint.length)
 df.log.diff.garch.long = pivot_longer(df.log.diff.garch, -Date, names_to = "Line_all")
 df.log.diff.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", paste(1 - alpha, "predint"))
-fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_arma-garch_long.csv"))
+#fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_arma-garch_long.csv"))
 
 
 ggplot(df.log.diff.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = Line, group = Line_all)) +
@@ -125,3 +124,4 @@ ggplot(df.log.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = Line, 
   geom_line(data = data.frame(Date = data$Date, Price = log(data$Price)), aes(x = Date, y = Price))
   
 
+test_preds(roll.garch@forecast$density$Mu, data, data.log.diff)

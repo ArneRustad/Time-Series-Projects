@@ -20,6 +20,26 @@ aicc = function(model){
   return(aicc)
 }
 
+test_preds = function(preds.log.diff, data, data.log.diff) {
+  data = na.omit(dplyr::filter(data, Date >= (start.date - 1)))
+  data.log.diff = na.omit(dplyr::filter(data.log.diff, Date >= start.date))
+  if (length(preds.log.diff) != nrow(data) - 1) stop("Length of preds.log.diff must be two less than nrow of data")
+  if (length(preds.log.diff) != nrow(data.log.diff)) stop("Length of preds.log.diff must be the same as nrow data.log.diff")
+  
+  correct.direction = mean(sign(preds.log.diff) == sign(data.log.diff$Price))
+  multipliers = diff(data$Price) / data$Price[-nrow(data)] + 1
+  active.investment = prod(ifelse(preds.log.diff >= 0, multipliers, 1))
+  
+  preds.log = log(data$Price)[-nrow(data)] + preds.log.diff
+  preds = exp(preds.log)
+  
+  mean.absolute.error = mean(abs(preds - data$Price[-1]))
+  mean.squared.error = mean((preds - data$Price[-1])^2)
+  
+  return(list(mean.squared.error = mean.squared.error, mean.absolute.error = mean.absolute.error,
+              correct.direction = correct.direction, active.investment = active.investment))
+}
+
 image.dir = "Project2/Images/"
 dir.create(image.dir, showWarnings = FALSE)
 result.dir = "Project2/Results/"
