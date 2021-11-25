@@ -23,22 +23,25 @@ for (i in 1:nrow(df.aic.log.differenced)) {
   pb$tick()
 }
  df.aic.log.differenced = 
-   df.aic.log.differenced[order(df.aic.log.differenced$AICc, decreasing = FALSE),]
+   df.aic.log.differenced[order(df.aic.log.differenced$AICc, decreasing = TRUE),]
 df.aic.log.differenced
 fwrite(df.aic.log.differenced, paste0(result.dir, "df_aicc_log_diff.csv"))
 df.aic.log.differenced = fread(paste0(result.dir, "df_aicc_log_diff.csv"))
 df.aic.log.differenced
 
+dplyr::filter(df.aic.log.differenced, ar<=8 & ma<=8)
+
 head(df.aic.log.differenced %>% subset(nan.in.se == FALSE), 10)
 
 xtable(df.aic.log.differenced %>% select(ar, ma, AICc) %>% slice_head(n = 10))
 
-df.aic.log.differenced[order(df.aic.log.differenced$bic, decreasing = TRUE),]
+df.aic.log.differenced[order(df.aic.log.differenced$bic, decreasing = FALSE),]
 
 #Saving the ARMA model with best p and q
 mod.arima.log.differenced.best = arima(ts(log(data$Price)),
-                                       order=c(6, 1, 10))
+                                       order=c(7, 1, 10))
 
+head(df.aic.log.differenced[order(df.aic.log.differenced$AICc, decreasing = TRUE),], 10)
 
 
 # Diagnosting if residuals for ARMA model for differenced log transformed time
@@ -74,6 +77,22 @@ ggplot(data.frame(Residual = mod.arima.log.differenced.best$residuals),
 ggsave("plot_residuals_differenced_log_ts.jpg", 
        path = image.dir, width = width, height = height)
 
+#Plotting squared residuals + ACF and PACF
+ggplot(data.frame(Residual = mod.arima.log.differenced.best$residuals),
+       aes( x= seq_along(Residual), y = Residual^2)) +
+  geom_line() + 
+  ggtitle("Squared residuals from model on differenced log transformed time series") +
+  xlab("Residual no.") + ylab("Value")
+ggsave("plot_squared_residuals_differenced_log_ts.jpg", 
+       path = image.dir, width = width, height = height)
 
 
+jpeg(file=paste0(image.dir,"plot_acf_squared_residuals_differenced_log_ts.jpg"))
+acf(mod.arima.log.differenced.best$residuals^2, na.action = na.pass, main="ACF 
+    for squared residuals for ARMA(7,10)")
+dev.off()
 
+jpeg(file=paste0(image.dir,"plot_pacf_squared_residuals_differenced_log_ts.jpg"))
+pacf(mod.arima.log.differenced.best$residuals^2, na.action = na.pass, main="PACF
+     for squared residuals for ARMA(7,10)")
+dev.off()

@@ -24,8 +24,8 @@ image.dir = "Project2/Images/"
 dir.create(image.dir, showWarnings = FALSE)
 result.dir = "Project2/Results/"
 
-img.height = 6
-img.width = 8
+img.height = 6*0.8
+img.width = 8*0.8
 
 
 # Fetch data
