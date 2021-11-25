@@ -1,10 +1,10 @@
 source("Project2/libraries_dirs_and_functions.R")
 
 # Choosing GARCH model for differenced log transformed time series
-max.p = 2
-max.q = 2
-max.garch.p = 2
-max.garch.q = 2
+max.p = 4
+max.q = 4
+max.garch.p = 4
+max.garch.q = 4
 best.arma.p=7
 best.arma.q=10
 
@@ -18,7 +18,7 @@ if(best.arma.p>max.p | best.arma.q>max.q){
 
 pb = progress_bar$new(format = "(:spin) [:bar] :percent [Elapsed time: 
                       :elapsedfull || Estimated time remaining: :eta]",
-                      total = (max.p+1)*(max.q+1)*(max.garch.p+1)*(max.garch.q), complete = "=", incomplete =
+                      total = nrow(df.aic.log.differenced), complete = "=", incomplete =
                         "-", current = ">", clear = TRUE)
 
 
@@ -36,7 +36,7 @@ for (i in 1:nrow(df.aic.log.differenced)) {
       df.aic.log.differenced[i, "AIC"] = infocriteria(model)[1]
       df.aic.log.differenced[i, "BIC"] = infocriteria(model)[2]
     },
-    warning=function(cond) {
+    error=function(cond) {
       df.aic.log.differenced[i, "AIC"] = NA
       df.aic.log.differenced[i, "BIC"] = NA
     }
@@ -47,9 +47,13 @@ for (i in 1:nrow(df.aic.log.differenced)) {
 
 df.aic.log.differenced = df.aic.log.differenced[order(df.aic.log.differenced$BIC, decreasing = FALSE),]
 df.aic.log.differenced
+View(df.aic.log.differenced)
 fwrite(df.aic.log.differenced, paste0(result.dir, "df_aic_log_diff_arma-igarch_tdist.csv"))
 df.aic.log.differenced = fread(paste0(result.dir, "df_aic_log_diff_arma-igarch_tdist.csv"))
 df.aic.log.differenced
+
+xtable(df.aic.log.differenced %>% select(ar, ma, garch.p,garch.q,AIC,BIC) %>% slice_head(n = 10),digits=3)
+
 
 # Fitting best GARCH model
 model.spec.best.garch <- ugarchspec(variance.model = list(garchOrder=c(df.aic.log.differenced$garch.p[1], df.aic.log.differenced$garch.q[1]), 
