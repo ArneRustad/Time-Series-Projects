@@ -30,6 +30,7 @@ df.aic.log.differenced
 fwrite(df.aic.log.differenced, paste0(result.dir, "df_aic_log_diff_garch.csv"))
 df.aic.log.differenced = fread(paste0(result.dir, "df_aic_log_diff_garch.csv"))
 df.aic.log.differenced
+xtable(df.aic.log.differenced %>% select(garch.p, garch.q, AIC, BIC) %>% slice_head(n = 10), digits = 3)
 
 # Creating differenced data set
 data.log.diff = na.omit(data.frame(Date = data$Date[-1], Price = diff(log(data$Price))))
@@ -71,7 +72,8 @@ ggplot(df.log.diff.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = L
   ylim(c(min(fread(paste0(result.dir, "df_log_diff_garch_tdist_long.csv"))$value,
              fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value),
          max(fread(paste0(result.dir, "df_log_diff_garch_tdist_long.csv"))$value,
-             fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value)))
+             fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value))) +
+  theme(legend.position = "bottom", plot.margin=unit(c(0.5,1,0,0),"cm")) 
 
 ggsave("garch_normal_log_diff_pred_confint.jpg", path = image.dir, width = img.width, height = img.height)
 
