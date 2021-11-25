@@ -29,14 +29,15 @@ img.width = 8*0.8
 
 
 # Fetch data
-data= read.csv("Project1/bitcoin_data.csv")
-
+data = read.csv("Project1/bitcoin_data.csv")
 
 # Change column type and format of missing values from . to NA
 colnames(data) = c("Date", "Price")
 data$Date = as.Date(data$Date)
 data$Price[which(data$Price == ".")] = NA
 data$Price = as.numeric(as.character(data$Price))
+
+data = na.omit(data)
 #View(data)
 
 
