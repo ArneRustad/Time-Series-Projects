@@ -61,8 +61,10 @@ start.date = as.Date("2019-10-06")
 start.date.nr = (1:nrow(data.log.diff))[data.log.diff$Date == (start.date - 1)]
 end.date.nr = nrow(data.log.diff)
 
+?ugarchroll
 roll.garch = ugarchroll(model.spec.best.garch, data = data.log.diff$Price,
-                        n.ahead = 1, forecast.length = end.date.nr - start.date.nr, n.start = start.date.nr)
+                        n.ahead = 1, forecast.length = end.date.nr - (start.date.nr + 1), n.start = start.date.nr,
+                        VaR.alpha = c(0.02, 0.025, 0.975))
 head(roll.garch@forecast$density)
 head(roll.garch@forecast$VaR)
 
@@ -75,7 +77,8 @@ pred = roll.garch@forecast$density$Mu
 df.log.diff.garch = data.frame(Date = dplyr::filter(data.log.diff, Date >= start.date)$Date,
                                Pred = pred,
                                lower.confint = pred -half.confint.length,
-                               upper.confint = pred + half.confint.length)
+                               upper.confint = pred + half.confint.length,
+                               test = roll.garch@forecast$VaR$`alpha(2%)`)
 df.log.diff.garch.long = pivot_longer(df.log.diff.garch, -Date, names_to = "Line_all")
 df.log.diff.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", paste(1 - alpha, "confint"))
 fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_arma-garch_long.csv"))
@@ -89,7 +92,15 @@ ggplot(df.log.diff.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = L
 print(model.best.garch@fit$coef)
 ggsave("arma-garch_log_diff_pred_confint.jpg", path = image.dir, width = img.width, height = img.height)
 
-log.price.for.test.obs = na.remove(log(data$Price))[(start.date.nr-1):(end.date.nr - 1)]
+log.price.for.test.obs = na.remove(log(data$Price))[(start.date.nr):(end.date.nr - 1)]
 df.log.garch = data.frame(Date = df.log.diff.garch$Date,
-                          Pred = df.log.diff.garch$Pred + log.price.for.test.obs) 
+                          Pred = df.log.diff.garch$Pred + log.price.for.test.obs,
+                          lower.confint = df.log.diff.garch$lower.confint + log.price.for.test.obs,
+                          upper.confint = df.log.diff.garch$upper.confint + log.price.for.test.obs)
+df.log.garch.long = pivot_longer(df.log.garch, -Date, names_to = "Line_all")
+df.log.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", "confint")
+ggplot(df.log.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = Line, group = Line_all)) + 
+  ggtitle("ARMA-GARCH 0.95 prediction intervals for log price") +
+  geom_line(data = data.frame(Date = data$Date, Price = log(data$Price)), aes(x = Date, y = Price))
+  
 

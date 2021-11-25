@@ -65,13 +65,13 @@ head(roll.garch@forecast$VaR)
 alpha = 0.05
 df = model.best.garch@fit$coef[names(model.best.garch@fit$coef) == "shape"]
 half.confint.length = qt(alpha / 2, df , lower.tail = FALSE) * roll.garch@forecast$density$Sigma * sqrt((df - 2) / df)
-pred = roll.garch@forecast$density$Mu
+pred = 
 
 
 df.log.diff.garch = data.frame(Date = dplyr::filter(data.log.diff, Date >= start.date)$Date,
-                               Pred = pred,
-                               lower.confint = pred -half.confint.length,
-                               upper.confint = pred + half.confint.length)
+                               Pred = roll.garch@forecast$density$Mu,
+                               lower.confint = roll.garch@forecast$VaR$`alpha(2%)`,
+                               upper.confint = roll.garch@forecast$VaR$`alpha(98%)`)
 df.log.diff.garch.long = pivot_longer(df.log.diff.garch, -Date, names_to = "Line_all")
 df.log.diff.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", paste(1 - alpha, "confint"))
 fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_arma-egarch_tdist_long.csv"))
