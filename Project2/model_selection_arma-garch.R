@@ -16,6 +16,9 @@ if(best.arma.p>max.p | best.arma.q>max.q){
                                data.frame(expand.grid(ar=best.arma.p, 
                                                       ma=best.arma.q, garch.p = 0:max.garch.p, garch.q = 0:max.garch.q)))
 }
+df.aic.log.differenced= data.frame(expand.grid(ar=best.arma.p, 
+                                                    ma=best.arma.q, garch.p = 0:max.garch.p, garch.q = 0:max.garch.q))
+
 
 pb = progress_bar$new(format = "(:spin) [:bar] :percent [Elapsed time: 
                       :elapsedfull || Estimated time remaining: :eta]",
@@ -38,7 +41,7 @@ for (i in 1:nrow(df.aic.log.differenced)) {
       df.aic.log.differenced[i, "AIC"] = infocriteria(model)[1]
       df.aic.log.differenced[i, "BIC"] = infocriteria(model)[2]
     },
-    warning=function(cond) {
+    error=function(cond) {
       df.aic.log.differenced[i, "AIC"] = NA
       df.aic.log.differenced[i, "BIC"] = NA
     }
@@ -47,13 +50,24 @@ for (i in 1:nrow(df.aic.log.differenced)) {
   pb$tick()
 }
 
+model.spec <- ugarchspec(variance.model = list(garchOrder=c(1, 1), 
+                                               model="fGARCH", submodel="GARCH"),
+                         mean.model = list(armaOrder = c(7,10),include.mean=FALSE),
+                         distribution.model = "std")
+model=ugarchfit(spec=model.spec, data=diff(log(na.omit(data$Price))))
+infocriteria(model)
+
+
 df.aic.log.differenced = df.aic.log.differenced[order(df.aic.log.differenced$BIC, decreasing = FALSE),]
-df.aic.log.differenced
+dplyr::filter(df.aic.log.differenced, ar==7 & ma==10)
+#temp=fread(paste0(result.dir, "df_aic_log_diff_arma-garch_tdist.csv"))
+#df.aic.log.differenced=rbind(df.aic.log.differenced,temp)
+
 fwrite(df.aic.log.differenced, paste0(result.dir, "df_aic_log_diff_arma-garch_tdist.csv"))
 df.aic.log.differenced = fread(paste0(result.dir, "df_aic_log_diff_arma-garch_tdist.csv"))
 df.aic.log.differenced
 
-xtable(df.aic.log.differenced %>% select(ar, ma, garch.p,garch.q,AIC,BIC) %>% slice_head(n = 10))
+xtable(df.aic.log.differenced %>% select(ar, ma, garch.p,garch.q,AIC,BIC) %>% slice_head(n = 10), digits = 3)
 
 
 
@@ -72,8 +86,7 @@ end.date.nr = nrow(data.log.diff)
 
 ?ugarchroll
 roll.garch = ugarchroll(model.spec.best.garch, data = data.log.diff$Price,
-                        n.ahead = 1, forecast.length = end.date.nr - (start.date.nr + 1), n.start = start.date.nr,
-                        VaR.alpha = c(0.02, 0.025, 0.975))
+                        n.ahead = 1, forecast.length = end.date.nr - (start.date.nr + 1), n.start = start.date.nr)
 head(roll.garch@forecast$density)
 head(roll.garch@forecast$VaR)
 
@@ -86,10 +99,9 @@ pred = roll.garch@forecast$density$Mu
 df.log.diff.garch = data.frame(Date = dplyr::filter(data.log.diff, Date >= start.date)$Date,
                                Pred = pred,
                                lower.confint = pred -half.confint.length,
-                               upper.confint = pred + half.confint.length,
-                               test = roll.garch@forecast$VaR$`alpha(2%)`)
+                               upper.confint = pred + half.confint.length)
 df.log.diff.garch.long = pivot_longer(df.log.diff.garch, -Date, names_to = "Line_all")
-df.log.diff.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", paste(1 - alpha, "confint"))
+df.log.diff.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", paste(1 - alpha, "predint"))
 fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_arma-garch_long.csv"))
 
 

@@ -26,7 +26,7 @@ for (i in 1:nrow(df.aic.log.differenced)) {
 }
 
 df.aic.log.differenced = df.aic.log.differenced[order(df.aic.log.differenced$BIC, decreasing = FALSE),]
-df.aic.log.differenced
+View(df.aic.log.differenced)
 fwrite(df.aic.log.differenced, paste0(result.dir, "df_aic_log_diff_garch.csv"))
 df.aic.log.differenced = fread(paste0(result.dir, "df_aic_log_diff_garch.csv"))
 df.aic.log.differenced
@@ -62,7 +62,7 @@ df.log.diff.garch = data.frame(Date = dplyr::filter(data.log.diff, Date >= start
                                 lower.confint = pred -half.confint.length,
                                 upper.confint = pred + half.confint.length)
 df.log.diff.garch.long = pivot_longer(df.log.diff.garch, -Date, names_to = "Line_all")
-df.log.diff.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", paste(1 - alpha, "confint"))
+df.log.diff.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", paste(1 - alpha, "predint"))
 fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_garch_norm_long.csv"))
 
 
