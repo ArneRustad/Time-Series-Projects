@@ -5,7 +5,16 @@ max.p = 2
 max.q = 2
 max.garch.p = 2
 max.garch.q = 2
+best.arma.p=7
+best.arma.q=10
+
 df.aic.log.differenced = data.table(expand.grid(ar = 0:max.p, ma = 0:max.q, garch.p = 0:max.garch.p, garch.q = 1:max.garch.q))
+
+if(best.arma.p>max.p | best.arma.q>max.q){
+  df.aic.log.differenced=rbind(df.aic.log.differenced, 
+                               data.frame(expand.grid(ar=best.arma.p, 
+                                                      ma=best.arma.q, garch.p = 0:max.garch.p, garch.q = 0:max.garch.q)))
+}
 
 pb = progress_bar$new(format = "(:spin) [:bar] :percent [Elapsed time: 
                       :elapsedfull || Estimated time remaining: :eta]",
