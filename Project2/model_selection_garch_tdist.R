@@ -42,6 +42,8 @@ fwrite(df.aic.log.differenced, paste0(result.dir, "df_aic_log_diff_garch_tdist.c
 df.aic.log.differenced = fread(paste0(result.dir, "df_aic_log_diff_garch_tdist.csv"))
 df.aic.log.differenced
 
+xtable(df.aic.log.differenced %>% select(garch.p,garch.q,AIC,BIC) %>% slice_head(n = 10),digits=3)
+
 # Creating differenced data set
 data.log.diff = na.omit(data.frame(Date = data$Date[-1], Price = diff(log(data$Price))))
 
@@ -73,6 +75,7 @@ df.log.diff.garch = data.frame(Date = dplyr::filter(data.log.diff, Date >= start
                                Pred = pred,
                                lower.confint = pred -half.confint.length,
                                upper.confint = pred + half.confint.length)
+
 df.log.diff.garch.long = pivot_longer(df.log.diff.garch, -Date, names_to = "Line_all")
 df.log.diff.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", paste(1 - alpha, "confint"))
 fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_garch_tdist_long.csv"))
@@ -84,7 +87,7 @@ ggplot(df.log.diff.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = L
   ylim(c(min(fread(paste0(result.dir, "df_log_diff_garch_tdist_long.csv"))$value,
              fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value),
        max(fread(paste0(result.dir, "df_log_diff_garch_tdist_long.csv"))$value,
-           fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value)))
+           fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value)))+theme(legend.position="bottom", plot.margin = unit(c(0.5,1,0,0),"cm"))
 
 
 print(model.best.garch@fit$coef)
