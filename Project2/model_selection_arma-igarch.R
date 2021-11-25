@@ -74,22 +74,6 @@ roll.garch = ugarchroll(model.spec.best.garch, data = data.log.diff$Price,
 head(roll.garch@forecast$density)
 head(roll.garch@forecast$VaR)
 
-
-test_preds = function(preds.log.diff, data, data.log.diff) {
-  data = na.omit(dplyr::filter(data, Date >= (start.date - 1)))
-  data.log.diff = na.omit(dplyr::filter(data.log.diff, Date >= start.date))
-  print(length(preds.log.diff))
-  print(nrow(data))
-  print(nrow(data.log.diff))
-  if (length(preds.log.diff) != nrow(data) - 1) stop("Length of preds.log.diff must be two less than nrow of data")
-  if (length(preds.log.diff) != nrow(data.log.diff)) stop("Length of preds.log.diff must be the same as nrow data.log.diff")
-  
-  correct.direction = mean(sign(preds.log.diff) == sign(data.log.diff$Price))
-  print(correct.direction)
-}
-
-test_preds(roll.garch@forecast$density$Mu, data, data.log.diff)
-
 alpha = 0.05
 df = model.best.garch@fit$coef[names(model.best.garch@fit$coef) == "shape"]
 
@@ -100,7 +84,7 @@ df.log.diff.garch = data.frame(Date = dplyr::filter(data.log.diff, Date >= start
                                upper.confint = roll.garch@forecast$VaR$`alpha(98%)`)
 df.log.diff.garch.long = pivot_longer(df.log.diff.garch, -Date, names_to = "Line_all")
 df.log.diff.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", paste(1 - alpha, "confint"))
-fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_arma-igarch_tdist_long.csv"))
+#fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_arma-igarch_tdist_long.csv"))
 
 
 ggplot(df.log.diff.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = Line, group = Line_all)) +
@@ -110,3 +94,5 @@ ggplot(df.log.diff.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = L
 
 print(model.best.garch@fit$coef)
 ggsave("arma-igarch_tdist_log_diff_pred_confint.jpg", path = image.dir, width = img.width, height = img.height)
+
+test_preds(roll.garch@forecast$density$Mu, data, data.log.diff)
