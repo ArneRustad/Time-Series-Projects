@@ -25,10 +25,28 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
                         total = nrow(data.test), complete = "=", incomplete =
     "-", current = ">", clear = FALSE)
   for (i in seq_len(nrow(data.test))) {
-    fit = arima(data$Price[data$Date < curr.date.test], order = order)
-    data.test[i, pred.cols] = predict(fit, n.ahead = n.pred.ahead)$pred
-    curr.date.test = curr.date.test + 1
-    pb$tick()
+    tryCatch(
+      {
+        fit = arima(data$Price[data$Date < curr.date.test], order = order)
+        data.test[i, pred.cols] = predict(fit, n.ahead = n.pred.ahead)$pred
+      },
+      error=function(cond){
+        message("This is an error, here is the original error message")
+        message(cond)
+        print(i)
+        print(curr.date.test)
+      },
+      warning=function(cond){
+        message("This is a warning, here is the original warning message")
+        message(cond)
+        print(i)
+        print(curr.date.test)
+      },
+      finally={
+        curr.date.test=curr.date.test+1
+        pb$tick()
+      }
+    )
   }
    cols.pred.and.price = str_detect(colnames(data.test), "^Pred|^Price")
   
@@ -97,7 +115,7 @@ test.preds.arima = function(data, order, start.date.test, transformation = NULL,
 }
 
 #Running the prediction for our choice of ARMA model
-test.preds.arima(data, order = c(2,1,1), start.date.test = "2019-10-06",
+test.preds.arima(data, order = c(7,1,10), start.date.test = "2019-10-06",
                  transformation = log, inv.transformation = exp,
                  n.pred.ahead = 2, plot.pred = 1)
 
