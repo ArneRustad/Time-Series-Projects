@@ -56,20 +56,26 @@ start.date.nr = (1:nrow(data.log.diff))[data.log.diff$Date == (start.date - 1)]
 end.date.nr = nrow(data.log.diff)
 
 roll.garch = ugarchroll(model.spec.best.garch, data = data.log.diff$Price,
-                        n.ahead = 1, forecast.length = end.date.nr - start.date.nr, n.start = start.date.nr)
+                        n.ahead = 1, forecast.length = end.date.nr - start.date.nr, n.start = start.date.nr,
+                        VaR.alpha = c(0.025, 0.975))
 head(roll.garch@forecast$density)
 head(roll.garch@forecast$VaR)
 
-length(roll.garch@forecast$density$Mu)
-nrow(data.log.diff %>% dplyr::filter(Date >= start.date))
 
-test_preds = function(preds.log.diff, price) {
-  if (length(preds.log.diff) != length(price) - 1) stop("Length of preds.log.diff must be one less than length of price")
-}
-
-test_preds(roll.garch@forecast$density$Mu, filter()) {
+test_preds = function(preds.log.diff, data, data.log.diff) {
+  data = na.omit(dplyr::filter(data, Date >= (start.date - 1)))
+  data.log.diff = na.omit(dplyr::filter(data.log.diff, Date >= start.date))
+  print(length(preds.log.diff))
+  print(nrow(data))
+  print(nrow(data.log.diff))
+  if (length(preds.log.diff) != nrow(data) - 1) stop("Length of preds.log.diff must be two less than nrow of data")
+  if (length(preds.log.diff) != nrow(data.log.diff)) stop("Length of preds.log.diff must be the same as nrow data.log.diff")
   
+  correct.direction = mean(sign(preds.log.diff) == sign(data.log.diff$Price))
+  print(correct.direction)
 }
+
+test_preds(roll.garch@forecast$density$Mu, data, data.log.diff)
 
 alpha = 0.05
 df = model.best.garch@fit$coef[names(model.best.garch@fit$coef) == "shape"]

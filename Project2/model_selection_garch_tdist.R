@@ -27,7 +27,7 @@ for (i in 1:nrow(df.aic.log.differenced)) {
       df.aic.log.differenced[i, "AIC"] = infocriteria(model)[1]
       df.aic.log.differenced[i, "BIC"] = infocriteria(model)[2]
     },
-    warning=function(cond) {
+    error=function(cond) {
       df.aic.log.differenced[i, "AIC"] = NA
       df.aic.log.differenced[i, "BIC"] = NA
     }
