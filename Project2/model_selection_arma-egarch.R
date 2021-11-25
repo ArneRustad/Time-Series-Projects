@@ -1,10 +1,10 @@
 source("Project2/libraries_dirs_and_functions.R")
 
 # Choosing GARCH model for differenced log transformed time series
-max.p = 2
-max.q = 2
-max.garch.p = 2
-max.garch.q = 2
+max.p = 4
+max.q = 4
+max.garch.p = 4
+max.garch.q = 4
 df.aic.log.differenced = data.table(expand.grid(ar = 0:max.p, ma = 0:max.q, garch.p = 0:max.garch.p, garch.q = 0:max.garch.q))
 
 pb = progress_bar$new(format = "(:spin) [:bar] :percent [Elapsed time: 
