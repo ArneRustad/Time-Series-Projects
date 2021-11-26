@@ -27,7 +27,7 @@ for (i in 1:nrow(df.aic.log.differenced)) {
       df.aic.log.differenced[i, "AIC"] = infocriteria(model)[1]
       df.aic.log.differenced[i, "BIC"] = infocriteria(model)[2]
     },
-    error=function(cond) {
+    warning=function(cond) {
       df.aic.log.differenced[i, "AIC"] = NA
       df.aic.log.differenced[i, "BIC"] = NA
     }
@@ -77,7 +77,7 @@ df.log.diff.garch = data.frame(Date = dplyr::filter(data.log.diff, Date >= start
                                upper.confint = pred + half.confint.length)
 
 df.log.diff.garch.long = pivot_longer(df.log.diff.garch, -Date, names_to = "Line_all")
-df.log.diff.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", paste(1 - alpha, "confint"))
+df.log.diff.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", paste(1 - alpha, "predint"))
 fwrite(df.log.diff.garch.long, paste0(result.dir, "df_log_diff_garch_tdist_long.csv"))
 
 
@@ -87,8 +87,10 @@ ggplot(df.log.diff.garch.long, aes(x = Date)) + geom_line(aes(y = value, col = L
   ylim(c(min(fread(paste0(result.dir, "df_log_diff_garch_tdist_long.csv"))$value,
              fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value),
        max(fread(paste0(result.dir, "df_log_diff_garch_tdist_long.csv"))$value,
-           fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value)))+theme(legend.position="bottom", plot.margin = unit(c(0.5,1,0,0),"cm"))
+           fread(paste0(result.dir, "df_log_diff_garch_norm_long.csv"))$value)))+
+  theme(legend.position="bottom", plot.margin = unit(c(0.5,1,0,0),"cm"))
 
 
 print(model.best.garch@fit$coef)
-ggsave("garch_tdist_log_diff_pred_confint.jpg", path = image.dir, width = img.width, height = img.height)
+ggsave("garch_tdist_log_diff_pred_confint.jpg", path = image.dir, 
+       width = img.width, height = img.height)

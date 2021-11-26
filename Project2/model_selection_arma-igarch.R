@@ -80,7 +80,7 @@ df = model.best.garch@fit$coef[names(model.best.garch@fit$coef) == "shape"]
 
 df.log.diff.garch = data.frame(Date = dplyr::filter(data.log.diff, Date >= start.date)$Date,
                                Pred = roll.garch@forecast$density$Mu,
-                               lower.confint = roll.garch@forecast$VaR$`alpha(2%)`,
+                               lower.confint = roll.garch@forecast$VaR$`alpha(3%)`,
                                upper.confint = roll.garch@forecast$VaR$`alpha(98%)`)
 df.log.diff.garch.long = pivot_longer(df.log.diff.garch, -Date, names_to = "Line_all")
 df.log.diff.garch.long$Line = str_replace(df.log.diff.garch.long$Line_all, "lower.confint|upper.confint", paste(1 - alpha, "confint"))
