@@ -71,14 +71,17 @@ start.date.nr = (1:nrow(data.log.diff))[data.log.diff$Date == (start.date - 1)]
 end.date.nr = nrow(data.log.diff)
 
 roll.garch = ugarchroll(model.spec.best.garch, data = data.log.diff$Price,
-                        n.ahead = 1, forecast.length = end.date.nr - start.date.nr, n.start = start.date.nr)
+                        n.ahead = 1, forecast.length = end.date.nr - start.date.nr, n.start = start.date.nr,
+                        VaR.alpha = c(0.025, 0.975))
 head(roll.garch@forecast$density)
 head(roll.garch@forecast$VaR)
+
+data.table(lower.lenr = abs(roll.garch@forecast$VaR$`alpha(2%)` - roll.garch@forecast$density$Mu),
+           upper.lenr = abs(roll.garch@forecast$VaR$`alpha(98%)` - roll.garch@forecast$density$Mu))
 
 alpha = 0.05
 df = model.best.garch@fit$coef[names(model.best.garch@fit$coef) == "shape"]
 half.confint.length = qt(alpha / 2, df , lower.tail = FALSE) * roll.garch@forecast$density$Sigma * sqrt((df - 2) / df)
-pred = 
 
 
 df.log.diff.garch = data.frame(Date = dplyr::filter(data.log.diff, Date >= start.date)$Date,
